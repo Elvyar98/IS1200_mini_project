@@ -76,6 +76,59 @@ void set_displays(int display_number, int value) {
     }
 }
 
+int convert_to_segm7(int value) {
+    switch(value) {
+        case 0: return 64;
+        case 1: return 121;
+        case 2: return 36;
+        case 3: return 48;
+        case 4: return 25;
+        case 5: return 18;
+        case 6: return 2;
+        case 7: return 120;
+        case 8: return 0;
+        case 9: return 16;
+        default: return 0;
+    }
+}
+
+void show_number(int n){
+
+    int thou_digit;
+    int hun_digit;
+    int ten_digit;
+    int one_digit;
+
+  if(n > 999){
+     thou_digit = n / 1000;
+     hun_digit = (n % 1000) / 100;
+     ten_digit = (n  % 100) / 10;
+     one_digit = (n % 10);
+
+    set_displays(4, convert_to_segm7(thou_digit));
+    set_displays(3, convert_to_segm7(hun_digit));
+    set_displays(2, convert_to_segm7(ten_digit));
+    set_displays(1, convert_to_segm7(one_digit));
+
+  }else if(n > 99){
+     hun_digit = n / 100;
+     ten_digit = (n % 100) / 10;
+     one_digit = (n % 10);
+
+    set_displays(4, convert_to_segm7(hun_digit));
+    set_displays(3, convert_to_segm7(ten_digit));
+    set_displays(2, convert_to_segm7(one_digit));
+  } else if(n > 9) {
+      ten_digit = n / 10;
+      one_digit = n % 10;
+
+    set_displays(4, convert_to_segm7(ten_digit));
+    set_displays(3, convert_to_segm7(one_digit));
+  } else {
+    set_displays(4, convert_to_segm7(n));
+  }
+}
+
 void show_prompt(int label) {
   set_displays(6, label);
   set_displays(5, SEG_DASH);
@@ -83,6 +136,7 @@ void show_prompt(int label) {
   set_displays(3, SEG_OFF);
   set_displays(2, SEG_OFF);
   set_displays(1, SEG_OFF);
+
 }
 
 void main() {
