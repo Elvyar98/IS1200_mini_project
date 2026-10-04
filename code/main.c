@@ -13,8 +13,8 @@
 #define SEG_DASH  63
 
 /*User inputs*/
-int distance;
-int units;
+int distance; //in cm
+int units; //km/h, mph, m/s
 int runs;
 
 /*Function to get the input from switches*/
@@ -169,6 +169,22 @@ void promt_user(){
   }
 }
 
+int calculate_speed(int time){
+  if(time == 0){
+    return 9999999;
+  }
+  
+  int speed = 
+
+  switch(unit){
+    case 1:
+      return speed;
+    case 2:
+    case 3:
+  }
+
+  int 
+}
 
 void main() {
   promt_user();
