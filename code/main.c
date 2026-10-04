@@ -118,14 +118,23 @@ void show_number(int n){
     set_displays(4, convert_to_segm7(hun_digit));
     set_displays(3, convert_to_segm7(ten_digit));
     set_displays(2, convert_to_segm7(one_digit));
+    set_displays(1, SEG_OFF);
+
   } else if(n > 9) {
       ten_digit = n / 10;
       one_digit = n % 10;
 
     set_displays(4, convert_to_segm7(ten_digit));
     set_displays(3, convert_to_segm7(one_digit));
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+
   } else {
     set_displays(4, convert_to_segm7(n));
+    set_displays(3, SEG_OFF);
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+
   }
 }
 
@@ -139,7 +148,22 @@ void show_prompt(int label) {
 
 }
 
+int read_prompt(int label){
+  while(!get_btn()){
+    show_prompt(label);
+  }
+
+  int user_choice = get_sw();
+  while(get_btn()){
+    user_choice = get_sw();
+    show_number(user_choice);
+  }
+
+  return user_choice;
+
+}
+
 void main() {
-  
+  int distance = read_prompt()
 }
 
