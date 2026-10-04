@@ -7,11 +7,15 @@
  * Last modified: 2026/10/02
  */
 #define SEG_OFF   127
-#define SEG_d     33
-#define SEG_U     65
-#define SEG_n     43
+#define SEG_D     33 //d
+#define SEG_U     65 
+#define SEG_N     43 //n 
 #define SEG_DASH  63
 
+/*User inputs*/
+int distance;
+int units;
+int runs;
 
 /*Function to get the input from switches*/
 int get_sw(void){
@@ -25,22 +29,6 @@ int get_btn(void){
 }
 
 
-/*convert_to_segm7 takes an int and converts it to an active low binary code for the displays */
-int convert_to_segm7(int value) {
-    switch(value) {
-        case 0: return 64;
-        case 1: return 121;
-        case 2: return 36;
-        case 3: return 48;
-        case 4: return 25;
-        case 5: return 18;
-        case 6: return 2;
-        case 7: return 120;
-        case 8: return 0;
-        case 9: return 16;
-        default: return 0;
-    }
-}
 
 /*Segmentdisplay_number corresponds to the display the user wants to set; value
 corresponds to the value to display.
@@ -163,7 +151,26 @@ int read_prompt(int label){
 
 }
 
+void promt_user(){
+  distance = 0;
+  units = 0;
+  runs = 0;
+
+  while(!distance){
+    distance = read_prompt(SEG_D);
+  }
+
+  while(!(units && units < 4)){
+    units = read_prompt(SEG_U);
+  }
+
+  while(!(runs && runs < 11) ){
+    runs = read_prompt(SEG_N);
+  }
+}
+
+
 void main() {
-  int distance = read_prompt()
+  promt_user();
 }
 
