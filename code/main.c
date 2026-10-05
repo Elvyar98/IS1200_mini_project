@@ -6,11 +6,14 @@
  * Created: 2026/10/02
  * Last modified: 2026/10/02
  */
-#define SEG_OFF   255
-#define SEG_D     161 //d
-#define SEG_U     193 
-#define SEG_N     200//n 
-#define SEG_DASH  191
+#define SEG_OFF   255  // 0xFF
+#define SEG_D     161  // 0xA1 (d)
+#define SEG_U     193  // 0xC1
+#define SEG_N     200  // 0xC8
+#define SEG_DASH  191  // 0xBF
+#define SEG_E     134  // 0x86   
+#define SEG_R     175  // 0xAF  (r)
+#define SEG_O     163  // 0xA3  (o)
 
 /*User inputs*/
 int distance; //in cm
@@ -198,9 +201,69 @@ void promt_user(){
   }
 }
 
+void show_speed(int speed){
+    if (speed == 9999999) {
+    
+      set_displays(6, SEG_E);
+      set_displays(5, SEG_R);
+      set_displays(4, SEG_R);
+      set_displays(3, SEG_O);
+      set_displays(2, SEG_R);
+      set_displays(1, SEG_OFF);
+      
+      //restart run();
+    }
+
+    int hun_thou_digit = speed / 100000;
+    int ten_thou_digit = (speed % 100000) / 10000;
+    int thou_digit = (speed % 10000) / 1000;
+    int hun_digit = (speed % 1000) / 100;
+    int ten_digit = (speed % 100) / 10;
+    int one_digit = (speed % 10);
+  
+    if (hun_thou_digit == 0 && ten_thou_digit != 0) {
+    
+    set_displays(6, convert_to_segm7(ten_thou_digit));
+    set_displays(5, convert_to_segm7(thou_digit));
+    set_displays(4, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(3, convert_to_segm7(ten_digit));
+     set_displays(2, convert_to_segm7(one_digit));
+    set_displays(1, SEG_OFF);
+
+    } else if ((hun_thou_digit == 0 && ten_thou_digit == 0) && thou_digit != 0){
+
+    set_displays(6, convert_to_segm7(thou_digit));
+    set_displays(5, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(4, convert_to_segm7(ten_digit));
+    set_displays(3, convert_to_segm7(one_digit));
+  
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+
+  } else if ((hun_thou_digit == 0 && ten_thou_digit == 0) && (thou_digit == 0 && (hun_digit != 0 || ten_digit != 0)))  {
+
+    set_displays(6, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(5, convert_to_segm7(ten_digit));
+    set_displays(4, convert_to_segm7(one_digit));
+    set_displays(3, SEG_OFF);
+  
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+
+  } else {
+    set_displays(6, convert_to_segm7(hun_thou_digit));
+    set_displays(5, convert_to_segm7(ten_thou_digit));
+    set_displays(4, convert_to_segm7(thou_digit));
+    set_displays(3, (convert_to_segm7(hun_digit) & 0x7F));
+  
+    set_displays(2, convert_to_segm7(ten_digit));
+    set_displays(1, convert_to_segm7(one_digit));
+  }
+}
+
 int calculate_speed(int time){
   if(time == 0){
-    return 9999999;
+      return 9999999;
   }
   
   int speed;
@@ -219,6 +282,10 @@ int calculate_speed(int time){
 
   return speed;
  
+}
+
+void start_run(){
+
 }
 
 void main() {
