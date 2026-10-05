@@ -6,11 +6,11 @@
  * Created: 2026/10/02
  * Last modified: 2026/10/02
  */
-#define SEG_OFF   127
-#define SEG_D     33 //d
-#define SEG_U     65 
-#define SEG_N     43 //n 
-#define SEG_DASH  63
+#define SEG_OFF   255
+#define SEG_D     161 //d
+#define SEG_U     193 
+#define SEG_N     200//n 
+#define SEG_DASH  191
 
 /*User inputs*/
 int distance; //in cm
@@ -68,19 +68,45 @@ void set_displays(int display_number, int value) {
 }
 
 int convert_to_segm7(int value) {
+    int number;
+
     switch(value) {
-        case 0: return 64;
-        case 1: return 121;
-        case 2: return 36;
-        case 3: return 48;
-        case 4: return 25;
-        case 5: return 18;
-        case 6: return 2;
-        case 7: return 120;
-        case 8: return 0;
-        case 9: return 16;
-        default: return 0;
+        case 0:
+          number =  64;
+          break;
+        case 1:
+          number =  121;
+          break;
+        case 2:
+          number =  36;
+          break;
+        case 3: 
+          number =  48;
+          break;
+        case 4: 
+          number =  25;
+          break;
+        case 5: 
+          number =  18;
+          break;
+        case 6: 
+          number =  2;
+          break;
+        case 7: 
+          number =  120;
+          break;
+        case 8: 
+          number =  0;
+          break;
+        case 9: 
+          number =  16;
+          break;
+        default:
+          number =  0;
+          break;
     }
+
+  return number | 0x80;
 }
 
 void show_number(int n){
