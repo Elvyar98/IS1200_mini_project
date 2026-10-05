@@ -127,6 +127,6 @@ _start:
 loop:	j loop
 
 enable_interrupt:
-    csrsi mie, 16        # Tillåt avbrott från TMR1 (avbrottskälla/IRQ 16)
+    csrsi mie, 16        # Tillåt avbrott från TMR1 (avbrottskälla/IRQ 16), för fler lägg till , 17 tex.
     csrsi mstatus, 8     # Sätt MIE-biten (bit 3, mask 0x8) för att aktivera globala avbrott
     jr ra
