@@ -198,21 +198,28 @@ void promt_user(){
   }
 }
 
-/*int calculate_speed(int time){
+int calculate_speed(int time){
   if(time == 0){
     return 9999999;
   }
   
-  int speed = 
+  int speed;
 
-  switch(unit){
+  switch(units){
     case 1:
-      return speed;
+      speed =  (distance * 1000)/time;
+      break;
     case 2:
+      speed = (distance * 3600)/time;
+      break;
     case 3:
+      speed = (distance * 2237) / time;
+      break;
   }
+
+  return speed;
  
-}*/
+}
 
 void main() {
   promt_user();
