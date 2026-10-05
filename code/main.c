@@ -17,6 +17,9 @@ int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
+void handle_interrupt(unsigned int cause) {}
+void handle_exception(unsigned int cause) {}
+
 /*Function to get the input from switches*/
 int get_sw(void){
     volatile int *switches = (volatile int *) 0x4000010;
@@ -169,7 +172,7 @@ void promt_user(){
   }
 }
 
-int calculate_speed(int time){
+/*int calculate_speed(int time){
   if(time == 0){
     return 9999999;
   }
@@ -182,9 +185,8 @@ int calculate_speed(int time){
     case 2:
     case 3:
   }
-
-  int 
-}
+ 
+}*/
 
 void main() {
   promt_user();
