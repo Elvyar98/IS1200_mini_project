@@ -4,7 +4,7 @@
  *  Yarquah, Elvis
  *
  * Created: 2026/10/02
- * Last modified: 2026/10/02
+ * Last modified: 2026/10/05
  */
 #define SEG_OFF   255  // 0xFF
 #define SEG_D     161  // 0xA1 (d)
@@ -15,13 +15,48 @@
 #define SEG_R     175  // 0xAF  (r)
 #define SEG_O     163  // 0xA3  (o)
 
+/*GPIO addresses*/
+/*Adress for data for GPIO*/
+#define GPIO1_DATA  ((volatile int *) 0x040000E0)
+/*Adress for changing between Input and Output for GPIO*/
+#define GPIO1_DIR   ((volatile int *) 0x040000E4)
+
+/*Timer registers*/
+#define TMR1_CTRL ((volatile unsigned short*) 0x04000024)
+#define TMR1_PERLO ((volatile unsigned short*) 0x04000028)
+#define TMR1_PERHI ((volatile unsigned short*) 0x0400002c)
+
 /*User inputs*/
 int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
+/*Timer settings*/
+void start_timer(void){
+/*The timer’s actual period is one cycle greater than the value stored in the period n registers
+because the counter assumes the value zero for one clock cycle.*/
+
+//divided by 1000 in order to get ms
+  *(TMR1_PERLO) = (29999999/1000) & 0xFFFF;  //also cna be called PeriodL, describes the timeout limits LSB
+  *(TMR1_PERHI) = (29999999/1000) >> 16; //describes the timeout limits MSB but is only 16bit, therefore shifts the highest 16 bits to lower spots
+  *(TMR1_CTRL) = 0x7; //due to 0111 instead of 0110, ITO bit set to 1
+
+  enable_interrupt(); //calls boot.S method for enabling interrupts
+}
+
 void handle_interrupt(unsigned int cause) {}
 void handle_exception(unsigned int cause) {}
+
+void start_GPIO(void) {
+    /* Set pins to input mode (0 = input) */
+    *GPIO1_DIR = 0x0;
+}
+
+/* GPIO data read for pins 0 and 1, which are in bit 0 and 1 respectively */
+/*Can be possibly split in order to have one method for each pin*/
+int read_GPIO (void) {
+    return *GPIO1_DATA & 0x3; //3 is bit 0 and 1. 1 or 2 for each pin.
+}
 
 /*Function to get the input from switches*/
 int get_sw(void){
