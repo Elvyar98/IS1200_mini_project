@@ -25,50 +25,98 @@
 /*Adress for changing between Input and Output for GPIO*/
 #define GPIO1_DIR   ((volatile int *) 0x040000E4)
 
-/*Timer registers*/
+/*Timer registers
+*By Blomquist, Gustaf*/
 #define TMR1_CTRL ((volatile unsigned short*) 0x04000024)
 #define TMR1_PERLO ((volatile unsigned short*) 0x04000028)
 #define TMR1_PERHI ((volatile unsigned short*) 0x0400002c)
+#define TMR1_STAT ((volatile unsigned short *) 0x04000020)
+#define TMR1_SNAPL ((volatile unsigned short *) 0x04000030)
+#define TMR1_SNAPH ((volatile unsigned short *) 0x04000034)
 /*Settings for Timer and GPIO detections*/
-#define maxTime_seconds ((unsigned int) 10)
-#define detect_required ((unsigned int) 10)
+#define maxTime_seconds ((unsigned int) 10) //in seconds
+#define detect_required ((unsigned int) 10) //in clock cycles
 
 /*User inputs*/
 int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> upstream/main
 /*Global_values*/
 int global_time = 0;
 
 
+<<<<<<< HEAD
+/*Timer setup. 
+* Modified by Blomquist, Gustaf. Origins from Lab 3*/
+=======
 
 /*Timer settings by Blomquist, Gustaf. Modified from Lab 3*/
+>>>>>>> upstream/main
 void start_timer(void){
-
-//divided by 1000 in order to get ms 29999999/1000
-/*Counts down from 1 seconds*/
+/*Counts down from maxTime_seconds*/
   *(TMR1_PERLO) = ((maxTime_seconds * 30000000) - 1) & 0xFFFF; 
   *(TMR1_PERHI) = ((maxTime_seconds * 30000000) - 1) >> 16; 
   *(TMR1_CTRL) = 0x6; //due to 0111 instead of 0110, ITO bit set to 1. 0x6 is TMR Start and Control
-
-  //enable_interrupt(); //calls boot.S method for enabling interrupts
 }
 
-void stop_timer(void);
-  
+/*To pause or stop timer
+* By Gemini AI*/
+void stop_timer(void){
+  *TMR1_CTRL = (1 << 3);
+}
+
+/*Timer test for time-out.
+* Modified by Blomquist, Gustaf. Origins from Lab 3*/
+int timertest(void)
+  {
+  if((*TMR1_STAT) & 0x1){ /* Test time-out event flag */
+    return(1);
+  } else{
+    return(0);
+  }
+} 
+
+/* For saving the current timer value in order to measure time.
+The result is then inverted to avoid getting time left and not time passed.
+Time is calculated based on remaining clock cycles and converted into Milliseconds.
+The unsigned Int is then casted into Int for the return value.
+*By Gemini AI, modified by Blomquist Gustaf*/
+int get_timer_snapshot(void) {
+    *TMR1_SNAPL = 0x0;
+
+    unsigned short low = *TMR1_SNAPL;
+    unsigned short high = *TMR1_SNAPH;
+
+    unsigned int current_timer = ((unsigned int)high << 16) | (unsigned int)low;
+    
+    unsigned int cycles = 300000000U - current_timer;
+
+    unsigned int time_in_Ms = cycles /30000U;
+
+    //Explicit cast to regular int
+    return (int)time_in_Ms;
+}
 
 void handle_interrupt(unsigned int cause) {}
 void handle_exception(unsigned int cause) {}
 
-/*GPIO methods by Blomquist, Gustaf*/
+/*GPIO start of input.
+* By Blomquist, Gustaf*/
 void start_GPIO_input(void) {
-    /* Set pins for GPIO#0 and GPIO#1 to input mode (0 = input) */
-    *GPIO1_DIR = 0x3;
+    /* Set pins for GPIO#0 and GPIO#1 to input mode, 0 = input */
+    *GPIO1_DIR = 0x0;
 }
 
-/*debouncing method,bitmask is the pin identifier, by Blomquist, Gustaf*/
+
+/*Debouncing method,bitmask is the pin identifier. 
+In order to avoid interference causing a false positive.
+This also converts the lack of input, IE a tripped laserwire, into a positive value.
+* By Blomquist, Gustaf*/
 int debouncing (int bitmask){
   int count = 0;
 
@@ -81,7 +129,8 @@ int debouncing (int bitmask){
 return (count == detect_required);
 }
 
-/*gate helping methods with built-in debouncing, by Blomquist Gustaf*/
+/*GPIO reading functions with debouncing.
+* By Blomquist Gustaf*/
 int read_GPIO_zero (void) {
   return debouncing (0x1); //3 is bit 0 and 1. 1 or 2 for each pin.
 }
@@ -90,38 +139,56 @@ int read_GPIO_one (void) {
   return debouncing (0x2); //3 is bit 0 and 1. 1 or 2 for each pin.
 }
 
-
-/*Measuring time between gates. By Blomquist, Gustaf*/
+/*Measuring time between gates.
+Starts inputs from GPIOs.
+Checks that both gates are clear.
+Then detects which of the two gates are passed first and starts timer.
+Stops timer either when last gate is passed or maxTime-seconds have passed.
+Converts time into ms, then returns the runTime in Ms
+* By Blomquist, Gustaf, modified by Gemini AI*/
 int sprint (void){
   start_GPIO_input();
+
+  while (read_GPIO_zero() || read_GPIO_one()){
+  }
+
   int runTime_Ms = 0;
-  int passed_first_gate = 0;
   int last_gate = -1;
   int first_gate = -1;
 
-  while (!passed_first_gate) {
+  while (1) {
     if (read_GPIO_zero()){
       first_gate = 0;
       last_gate = 1;
-      passed_first_gate = 1;
-    }
-    if (read_GPIO_one()){
+      break;
+    } else if (read_GPIO_one()){
       first_gate = 1;
       last_gate = 0;
-      passed_first_gate = 1;
+      break;
     }
   }
   
   start_timer();
 
+  while(1){
+    if (last_gate == 0 && read_GPIO_zero()){
+      runTime_Ms = get_timer_snapshot();
+      break;
+    }
 
+    if (last_gate == 1 && read_GPIO_one()){
+      runTime_Ms = get_timer_snapshot();
+      break;
+    }
+
+    if (timertest()){
+      runTime_Ms = 0;
+      break;
+    }
+  }
+  stop_timer();
    
-      
-        //runTimeMs =
-    
-  
-   
-  //if timer hits 10s then runTimeMs = 0; ERROR
+  //if timer hits 10s then runTimeMs = 0; ERROR will be Notify User
   return runTime_Ms;
 }
 
