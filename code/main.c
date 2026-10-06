@@ -144,15 +144,12 @@ int sprint (void){
 
   int runTime_Ms = 0;
   int last_gate = -1;
-  int first_gate = -1;
 
   while (1) {
     if (read_GPIO_zero()){
-      first_gate = 0;
       last_gate = 1;
       break;
     } else if (read_GPIO_one()){
-      first_gate = 1;
       last_gate = 0;
       break;
     }
@@ -446,7 +443,7 @@ void show_speed(int speed){
  *Converts to ms/s, km/h and mi/h if units is 1,2 or 3.
  By Elvis Yarquah*/
 int calculate_speed(){
-  int speed;
+  int speed = 0;
 
   switch(units){
     case 1:
