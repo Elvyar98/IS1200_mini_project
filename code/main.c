@@ -34,7 +34,6 @@
 #define TMR1_SNAPL ((volatile unsigned short *) 0x04000030)
 #define TMR1_SNAPH ((volatile unsigned short *) 0x04000034)
 /*Settings for Timer and GPIO detections*/
-#define maxTime_seconds ((unsigned int) 10) //in seconds
 #define detect_required ((unsigned int) 10) //in clock cycles
 
 /*User inputs*/
@@ -42,21 +41,13 @@ int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/main
 /*Global_values*/
 int global_time = 0;
+unsigned int maxTime_seconds = 0; //in seconds
 
-
-<<<<<<< HEAD
 /*Timer setup. 
 * Modified by Blomquist, Gustaf. Origins from Lab 3*/
-=======
 
-/*Timer settings by Blomquist, Gustaf. Modified from Lab 3*/
->>>>>>> upstream/main
 void start_timer(void){
 /*Counts down from maxTime_seconds*/
   *(TMR1_PERLO) = ((maxTime_seconds * 30000000) - 1) & 0xFFFF; 
@@ -147,7 +138,6 @@ Stops timer either when last gate is passed or maxTime-seconds have passed.
 Converts time into ms, then returns the runTime in Ms
 * By Blomquist, Gustaf, modified by Gemini AI*/
 int sprint (void){
-  start_GPIO_input();
 
   while (read_GPIO_zero() || read_GPIO_one()){
   }
@@ -167,8 +157,9 @@ int sprint (void){
       break;
     }
   }
-  
+  maxTime_seconds = 10; 
   start_timer();
+  
 
   while(1){
     if (last_gate == 0 && read_GPIO_zero()){
@@ -493,21 +484,37 @@ void show_time(){
   //display 1 5
 }
 
-/*Check lasers constantly polls the GPIOs for a 1 and counts from 1-4. 
+/*Delays by n seconds on the hardware level as not to interrupt software level
+ * By Elvis Yarquah*/
+
+void delay(int seconds){
+  maxTime_seconds = seconds;
+  start_timer();
+  while(1){
+    if (timertest()) {
+      *TMR1_STAT = 0;
+      break;
+    }
+  }
+  stop_timer();
+}
+
+/*Check GPIOS constantly polls the GPIOs and counts from 1-4. 
  * If it gets a zero during the count it restarts.
  * If it never reads a 1 then it "Throws" an error
  * By Elvis Yarquah*/
 
 void check_gpios() {
+  start_GPIO_input();
+
   int counter = 0;
   while((read_GPIO_one() && read_GPIO_zero()) && counter < 9){
     if (counter == 0) {
       counter++;
     }
+    delay(1);
     set_leds(counter);
     counter += counter;
-    maxTime_seconds = 1;
-    start_timer();
   }
 
   if (counter == 0) {
@@ -557,7 +564,7 @@ int start_run(){
 }
 
 void main() {
+
   promt_user();
   start_run();
 }
-
