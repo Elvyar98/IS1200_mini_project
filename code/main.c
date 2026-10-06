@@ -72,7 +72,10 @@ int timertest(void)
   }
 } 
 
-/* Snapshot method
+/* For saving the current timer value in order to measure time.
+The result is then inverted to avoid getting time left and not time passed.
+Time is calculated based on remaining clock cycles and converted into Milliseconds.
+The unsigned Int is then casted into Int for the return value.
 *By Gemini AI, modified by Blomquist Gustaf*/
 int get_timer_snapshot(void) {
     *TMR1_SNAPL = 0x0;
@@ -102,6 +105,8 @@ void start_GPIO_input(void) {
 
 
 /*Debouncing method,bitmask is the pin identifier. 
+In order to avoid interference causing a false positive.
+This also converts the lack of input, IE a tripped laserwire, into a positive value.
 * By Blomquist, Gustaf*/
 int debouncing (int bitmask){
   int count = 0;
@@ -124,7 +129,6 @@ int read_GPIO_zero (void) {
 int read_GPIO_one (void) {
   return debouncing (0x2); //3 is bit 0 and 1. 1 or 2 for each pin.
 }
-
 
 /*Measuring time between gates.
 Starts inputs from GPIOs.
