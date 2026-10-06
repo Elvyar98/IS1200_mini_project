@@ -42,12 +42,21 @@ int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/main
 /*Global_values*/
 int global_time = 0;
 
 
+<<<<<<< HEAD
 /*Timer setup. 
 * Modified by Blomquist, Gustaf. Origins from Lab 3*/
+=======
+
+/*Timer settings by Blomquist, Gustaf. Modified from Lab 3*/
+>>>>>>> upstream/main
 void start_timer(void){
 /*Counts down from maxTime_seconds*/
   *(TMR1_PERLO) = ((maxTime_seconds * 30000000) - 1) & 0xFFFF; 
@@ -444,7 +453,6 @@ void show_speed(int speed){
 }
 /*calculate_speed takes in time(ms) in the form of an int.
  *Converts to ms/s, km/h and mi/h if units is 1,2 or 3.
- Returns a way to big number if time == 0.
  By Elvis Yarquah*/
 int calculate_speed(){
   int speed;
@@ -465,39 +473,9 @@ int calculate_speed(){
  
 }
 
-void check_lasers(){
-  int counter = 0;
 
-  while(counter < 9) {
-    if(counter == 0 ) counter++;
-    if(read_GPIO()){
-      set_leds(counter);
-      counter += counter;
-    } else {
-      counter = 0;
-      set_leds(counter);
-    }
-  }
-}
-/*Start run intialize a check to make sure the lasers are connected. 
- * "Throws" an error and restarts run  if time is 0.
- * returns speed.
- * By Elvis Yarquah
- * */
-int start_run(){
-  int speed = 0;
-  check_lasers();
-  global_time  = get_time();
+void show_error() {
 
-   if (global_time == 0) {
-
-     set_displays(6, SEG_E);
-     set_displays(5, SEG_R);
-     set_displays(4, SEG_R);
-     set_displays(3, SEG_O);
-     set_displays(2, SEG_R);
-     set_displays(1, SEG_OFF);
-     
     while(!get_btn()){
       
      set_displays(6, SEG_E);
@@ -507,6 +485,57 @@ int start_run(){
      set_displays(2, SEG_R);
      set_displays(1, SEG_OFF);
     }
+}
+
+void show_time(){
+//show_speed
+  //display 2 SEG_OFF
+  //display 1 5
+}
+
+/*Check lasers constantly polls the GPIOs for a 1 and counts from 1-4. 
+ * If it gets a zero during the count it restarts.
+ * If it never reads a 1 then it "Throws" an error
+ * By Elvis Yarquah*/
+
+void check_gpios() {
+  int counter = 0;
+  while((read_GPIO_one() && read_GPIO_zero()) && counter < 9){
+    if (counter == 0) {
+      counter++;
+    }
+    set_leds(counter);
+    counter += counter;
+    maxTime_seconds = 1;
+    start_timer();
+  }
+
+  if (counter == 0) {
+    show_error();
+  }
+
+  if (counter < 9) {
+    check_gpios();
+  }
+
+  set_leds(0);
+}
+
+
+/*Start run intialize a check to make sure the lasers are connected. 
+ * "Throws" an error and restarts run  if time is 0.
+ * returns speed.
+ * By Elvis Yarquah
+ * */
+int start_run(){
+  int speed = 0;
+  check_gpios();
+  global_time  = sprint();
+
+   if (global_time == 0) {
+
+     while(!get_btn) show_error();
+     
     return start_run();
   }
 
