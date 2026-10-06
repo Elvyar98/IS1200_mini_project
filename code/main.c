@@ -349,7 +349,15 @@ int calculate_speed(){
 }
 
 void check_lasers(){
-  int counter = 0;
+  (volatile int) counter = 0;
+  while(read_GPIO()){
+    if (counter == 0) {
+      counter++;
+    }
+    set_leds(counter);
+    counter += counter;
+  }
+
 
   while(counter < 9) {
     if(counter == 0 ) counter++;
