@@ -35,6 +35,11 @@ int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
+/*Global_values*/
+int global_time = 0;
+
+
+
 /*Timer settings*/
 void start_timer(void){
 /*The timer’s actual period is one cycle greater than the value stored in the period n registers
@@ -267,19 +272,9 @@ void promt_user(){
 
 /*show_speed displays the speed in the hundreths.
  * It displays from left to right.
+ * returns 1 if sucessful, 0 if not.
  * By Elvis Yarquah*/
 void show_speed(int speed){
-    if (speed == 9999999) {
-    
-      set_displays(6, SEG_E);
-      set_displays(5, SEG_R);
-      set_displays(4, SEG_R);
-      set_displays(3, SEG_O);
-      set_displays(2, SEG_R);
-      set_displays(1, SEG_OFF);
-      
-      //restart run();
-    }
 
     int hun_thou_digit = speed / 100000;
     int ten_thou_digit = (speed % 100000) / 10000;
@@ -287,8 +282,17 @@ void show_speed(int speed){
     int hun_digit = (speed % 1000) / 100;
     int ten_digit = (speed % 100) / 10;
     int one_digit = (speed % 10);
+    
+    
+   if (speed >= 100000)  {
+    set_displays(6, convert_to_segm7(hun_thou_digit));
+    set_displays(5, convert_to_segm7(ten_thou_digit));
+    set_displays(4, convert_to_segm7(thou_digit));
+    set_displays(3, (convert_to_segm7(hun_digit) & 0x7F));
   
-    if (hun_thou_digit == 0 && ten_thou_digit != 0) {
+    set_displays(2, convert_to_segm7(ten_digit));
+    set_displays(1, convert_to_segm7(one_digit));
+  } else if (speed >= 10000) {
     
     set_displays(6, convert_to_segm7(ten_thou_digit));
     set_displays(5, convert_to_segm7(thou_digit));
@@ -297,64 +301,41 @@ void show_speed(int speed){
      set_displays(2, convert_to_segm7(one_digit));
     set_displays(1, SEG_OFF);
 
-    } else if ((hun_thou_digit == 0 && ten_thou_digit == 0) && thou_digit != 0){
+    } else if (speed >=1000){
 
     set_displays(6, convert_to_segm7(thou_digit));
     set_displays(5, (convert_to_segm7(hun_digit) & 0x7F));
     set_displays(4, convert_to_segm7(ten_digit));
     set_displays(3, convert_to_segm7(one_digit));
-  
     set_displays(2, SEG_OFF);
     set_displays(1, SEG_OFF);
 
-  } else if ((hun_thou_digit == 0 && ten_thou_digit == 0)
-    && (thou_digit == 0 &&
-    (hun_digit != 0 || (ten_digit != 0 || one_digit != 0))))  {
+  } else {
 
     set_displays(6, (convert_to_segm7(hun_digit) & 0x7F));
     set_displays(5, convert_to_segm7(ten_digit));
     set_displays(4, convert_to_segm7(one_digit));
     set_displays(3, SEG_OFF);
-  
     set_displays(2, SEG_OFF);
     set_displays(1, SEG_OFF);
   }
 }
-
-
-/*
-  } else {
-    set_displays(6, convert_to_segm7(hun_thou_digit));
-    set_displays(5, convert_to_segm7(ten_thou_digit));
-    set_displays(4, convert_to_segm7(thou_digit));
-    set_displays(3, (convert_to_segm7(hun_digit) & 0x7F));
-  
-    set_displays(2, convert_to_segm7(ten_digit));
-    set_displays(1, convert_to_segm7(one_digit));
-  }
- * /
-
-
 /*calculate_speed takes in time(ms) in the form of an int.
  *Converts to ms/s, km/h and mi/h if units is 1,2 or 3.
  Returns a way to big number if time == 0.
  By Elvis Yarquah*/
-int calculate_speed(int time){
-  if(time == 0){
-      return 9999999;
-  }
-  
+int calculate_speed(){
   int speed;
 
   switch(units){
     case 1:
-      speed =  (distance * 1000)/time;
+      speed =  (distance * 1000)/global_time;
       break;
     case 2:
-      speed = (distance * 3600)/time;
+      speed = (distance * 3600)/global_time;
       break;
     case 3:
-      speed = (distance * 2237) / time;
+      speed = (distance * 2237)/global_time;
       break;
   }
 
@@ -362,11 +343,59 @@ int calculate_speed(int time){
  
 }
 
-void start_run(){
+void check_lasers(){
+  
+}
+/*Start run intialize a check to make sure the lasers are connected. 
+ * "Throws" an error and restarts run  if time is 0.
+ * returns speed.
+ * By Elvis Yarquah
+ * */
+int start_run(){
+  int speed = 0;
+  check_lasers();
+  global_time  = get_time();
 
+   if (global_time == 0) {
+
+     set_displays(6, SEG_E);
+     set_displays(5, SEG_R);
+     set_displays(4, SEG_R);
+     set_displays(3, SEG_O);
+     set_displays(2, SEG_R);
+     set_displays(1, SEG_OFF);
+     
+    while(!get_btn()){
+      
+     set_displays(6, SEG_E);
+     set_displays(5, SEG_R);
+     set_displays(4, SEG_R);
+     set_displays(3, SEG_O);
+     set_displays(2, SEG_R);
+     set_displays(1, SEG_OFF);
+    }
+    return start_run();
+  }
+
+
+  speed = calculate_speed();
+  
+  while(!get_btn()){
+    show_speed(speed);
+  }
+
+  show_time();
+  
+  while(get_btn()){
+  
+  }
+
+
+  return speed;
 }
 
 void main() {
   promt_user();
+  start_run();
 }
 
