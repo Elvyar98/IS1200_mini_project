@@ -81,7 +81,12 @@ int get_btn(void){
     return *sec_btn & 0x1;
 }
 
-
+/*Sets the leds through a mask.
+ * By Gustaf Blomquist, Elvis Yarquah*/
+void set_leds(int led_mask) {
+    volatile int *leds = (volatile int*) 0x4000000;
+    *leds = led_mask;
+}
 
 /*Segmentdisplay_number corresponds to the display the user wants to set; value
 corresponds to the value to display.
@@ -344,7 +349,18 @@ int calculate_speed(){
 }
 
 void check_lasers(){
-  
+  int counter = 0;
+
+  while(counter < 9) {
+    if(counter == 0 ) counter++;
+    if(read_GPIO()){
+      set_leds(counter);
+      counter += counter;
+    } else {
+      counter = 0;
+      set_leds(counter);
+    }
+  }
 }
 /*Start run intialize a check to make sure the lasers are connected. 
  * "Throws" an error and restarts run  if time is 0.
