@@ -6,12 +6,16 @@
  * Created: 2026/10/02
  * Last modified: 2026/10/05
  */
+
+
+/*Values for seven segment display
+ * By Claude AI*/
 #define SEG_OFF   255  // 0xFF
 #define SEG_D     161  // 0xA1 (d)
 #define SEG_U     193  // 0xC1
 #define SEG_N     200  // 0xC8
 #define SEG_DASH  191  // 0xBF
-#define SEG_E     134  // 0x86   
+#define SEG_E     134  // 0x86
 #define SEG_R     175  // 0xAF  (r)
 #define SEG_O     163  // 0xA3  (o)
 
@@ -58,12 +62,15 @@ int read_GPIO (void) {
     return *GPIO1_DATA & 0x3; //3 is bit 0 and 1. 1 or 2 for each pin.
 }
 
-/*Function to get the input from switches*/
+/*Function to get the input from switches
+ * By Gustaf Blomquist*/
 int get_sw(void){
     volatile int *switches = (volatile int *) 0x4000010;
     return *switches & 0x3FF;
 }
 
+/*Gets input from second button
+ * By Gustaf Blomquist*/
 int get_btn(void){
     volatile int *sec_btn = (volatile int*) 0x40000d0;
     return *sec_btn & 0x1;
@@ -73,7 +80,8 @@ int get_btn(void){
 
 /*Segmentdisplay_number corresponds to the display the user wants to set; value
 corresponds to the value to display.
-Return value: nothing. */
+Return value: nothing.
+By Gustaf Blomquist, Elvis Yarquah*/
 void set_displays(int display_number, int value) {
     volatile int *display;
 
@@ -105,6 +113,9 @@ void set_displays(int display_number, int value) {
     }
 }
 
+/*convert_to_segm7 converts the ints to an active low binary code for the displays.
+ * Returns a masked number to put bit 7 on 1 to deactivate the dots
+ * By Elvis Yarquah, Gustaf Blomquist*/
 int convert_to_segm7(int value) {
     int number;
 
@@ -146,6 +157,10 @@ int convert_to_segm7(int value) {
 
   return number | 0x80;
 }
+
+/*Displays the users chosen numbers on the seven segment display.
+ * Shows number from left to right
+ * By Elvis Yarquah*/
 
 void show_number(int n){
 
@@ -193,6 +208,9 @@ void show_number(int n){
   }
 }
 
+/*Displays intial prompt for distance, units, amount of runs
+ * Displays from left to right
+ * By Elvis Yarquah*/
 void show_prompt(int label) {
   set_displays(6, label);
   set_displays(5, SEG_DASH);
@@ -202,6 +220,12 @@ void show_prompt(int label) {
   set_displays(1, SEG_OFF);
 
 }
+
+/*Reads and stores users choices from prompt
+ * Gets input by polling switches
+ * Displays input when button is pressed.
+ * Accepts input when button is released
+ * By Elvis Yarquah*/
 
 int read_prompt(int label){
   while(!get_btn()){
@@ -218,6 +242,11 @@ int read_prompt(int label){
 
 }
 
+/*Prompts user to input distance, unit of speed and amount of runs wanted.
+ * distance has to be greater than 0.
+ * units from 0 - 3.
+ * runs from 0 - 10.
+ * By Elvis Yarquah*/
 void promt_user(){
   distance = 0;
   units = 0;
@@ -236,6 +265,9 @@ void promt_user(){
   }
 }
 
+/*show_speed displays the speed in the hundreths.
+ * It displays from left to right.
+ * By Elvis Yarquah*/
 void show_speed(int speed){
     if (speed == 9999999) {
     
@@ -295,7 +327,10 @@ void show_speed(int speed){
     set_displays(1, convert_to_segm7(one_digit));
   }
 }
-
+/*calculate_speed takes in time(ms) in the form of an int.
+ *Converts to ms/s, km/h and mi/h if units is 1,2 or 3.
+ Returns a way to big number if time == 0.
+ By Elvis Yarquah*/
 int calculate_speed(int time){
   if(time == 0){
       return 9999999;
