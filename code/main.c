@@ -307,7 +307,9 @@ void show_speed(int speed){
     set_displays(2, SEG_OFF);
     set_displays(1, SEG_OFF);
 
-  } else if ((hun_thou_digit == 0 && ten_thou_digit == 0) && (thou_digit == 0 && (hun_digit != 0 || ten_digit != 0)))  {
+  } else if ((hun_thou_digit == 0 && ten_thou_digit == 0)
+    && (thou_digit == 0 &&
+    (hun_digit != 0 || (ten_digit != 0 || one_digit != 0))))  {
 
     set_displays(6, (convert_to_segm7(hun_digit) & 0x7F));
     set_displays(5, convert_to_segm7(ten_digit));
@@ -316,7 +318,11 @@ void show_speed(int speed){
   
     set_displays(2, SEG_OFF);
     set_displays(1, SEG_OFF);
+  }
+}
 
+
+/*
   } else {
     set_displays(6, convert_to_segm7(hun_thou_digit));
     set_displays(5, convert_to_segm7(ten_thou_digit));
@@ -326,7 +332,9 @@ void show_speed(int speed){
     set_displays(2, convert_to_segm7(ten_digit));
     set_displays(1, convert_to_segm7(one_digit));
   }
-}
+ * /
+
+
 /*calculate_speed takes in time(ms) in the form of an int.
  *Converts to ms/s, km/h and mi/h if units is 1,2 or 3.
  Returns a way to big number if time == 0.
