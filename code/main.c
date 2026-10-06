@@ -25,38 +25,97 @@
 #define TMR1_CTRL ((volatile unsigned short*) 0x04000024)
 #define TMR1_PERLO ((volatile unsigned short*) 0x04000028)
 #define TMR1_PERHI ((volatile unsigned short*) 0x0400002c)
+/*Settings for Timer and GPIO detections*/
+#define maxTime_seconds ((unsigned int) 10)
+#define detect_required ((unsigned int) 10)
 
 /*User inputs*/
 int distance; //in cm
 int units; //km/h, mph, m/s
 int runs;
 
-/*Timer settings*/
+/*Timer settings by Blomquist, Gustaf. Modified from Lab 3*/
 void start_timer(void){
-/*The timer’s actual period is one cycle greater than the value stored in the period n registers
-because the counter assumes the value zero for one clock cycle.*/
 
-//divided by 1000 in order to get ms
-  *(TMR1_PERLO) = (29999999/1000) & 0xFFFF;  //also cna be called PeriodL, describes the timeout limits LSB
-  *(TMR1_PERHI) = (29999999/1000) >> 16; //describes the timeout limits MSB but is only 16bit, therefore shifts the highest 16 bits to lower spots
-  *(TMR1_CTRL) = 0x7; //due to 0111 instead of 0110, ITO bit set to 1
+//divided by 1000 in order to get ms 29999999/1000
+/*Counts down from 1 seconds*/
+  *(TMR1_PERLO) = ((maxTime_seconds * 30000000) - 1) & 0xFFFF; 
+  *(TMR1_PERHI) = ((maxTime_seconds * 30000000) - 1) >> 16; 
+  *(TMR1_CTRL) = 0x6; //due to 0111 instead of 0110, ITO bit set to 1. 0x6 is TMR Start and Control
 
-  enable_interrupt(); //calls boot.S method for enabling interrupts
+  //enable_interrupt(); //calls boot.S method for enabling interrupts
 }
+
+void stop_timer(void);
+  
 
 void handle_interrupt(unsigned int cause) {}
 void handle_exception(unsigned int cause) {}
 
-void start_GPIO(void) {
-    /* Set pins to input mode (0 = input) */
-    *GPIO1_DIR = 0x0;
+/*GPIO methods by Blomquist, Gustaf*/
+void start_GPIO_input(void) {
+    /* Set pins for GPIO#0 and GPIO#1 to input mode (0 = input) */
+    *GPIO1_DIR = 0x3;
 }
 
-/* GPIO data read for pins 0 and 1, which are in bit 0 and 1 respectively */
-/*Can be possibly split in order to have one method for each pin*/
-int read_GPIO (void) {
-    return *GPIO1_DATA & 0x3; //3 is bit 0 and 1. 1 or 2 for each pin.
+/*debouncing method,bitmask is the pin identifier, by Blomquist, Gustaf*/
+int debouncing (int bitmask){
+  int count = 0;
+
+  for (int i = 0; i < detect_required; i++){
+    if ((*GPIO1_DATA & bitmask) == 0){
+      count++;
+    }
+  }
+  
+return (count == detect_required);
 }
+
+/*gate helping methods with built-in debouncing, by Blomquist Gustaf*/
+int read_GPIO_zero (void) {
+  return debouncing (0x1); //3 is bit 0 and 1. 1 or 2 for each pin.
+}
+
+int read_GPIO_one (void) {
+  return debouncing (0x2); //3 is bit 0 and 1. 1 or 2 for each pin.
+}
+
+
+/*Measuring time between gates. By Blomquist, Gustaf*/
+int sprint (void){
+  start_GPIO_input();
+  int runTime_Ms = 0;
+  int passed_first_gate = 0;
+  int last_gate = -1;
+  int first_gate = -1;
+
+  while (!passed_first_gate) {
+    if (read_GPIO_zero()){
+      first_gate = 0;
+      last_gate = 1;
+      passed_first_gate = 1;
+    }
+    if (read_GPIO_one()){
+      first_gate = 1;
+      last_gate = 0;
+      passed_first_gate = 1;
+    }
+  }
+  
+  start_timer();
+
+  while()
+
+   
+      
+        //runTimeMs =
+    
+  
+   
+  //if timer hits 10s then runTimeMs = 0; ERROR
+  return runTime_Ms;
+}
+
 
 /*Function to get the input from switches*/
 int get_sw(void){
