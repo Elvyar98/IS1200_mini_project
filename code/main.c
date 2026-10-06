@@ -18,6 +18,7 @@
 #define SEG_E     134  // 0x86
 #define SEG_R     175  // 0xAF  (r)
 #define SEG_O     163  // 0xA3  (o)
+#define SEG_S     146  // 0x92 
 
 /*GPIO addresses*/
 /*Adress for data for GPIO*/
@@ -478,10 +479,25 @@ void show_error() {
     }
 }
 
+/*show_time displays global_time (ms) as seconds with three decimals, e.g. 0.234.
+ * By Elvis Yarquah*/
 void show_time(){
-//show_speed
-  //display 2 SEG_OFF
-  //display 1 5
+
+  int t = global_time;
+  if (t > 9999) t = 9999;
+  if (t < 0) t = 0;
+
+  int thou_digit = t / 1000;
+  int hun_digit  = (t % 1000) / 100;
+  int ten_digit  = (t % 100) / 10;
+  int one_digit  = t % 10;
+
+  set_displays(6, convert_to_segm7(thou_digit) & 0x7F);
+  set_displays(5, convert_to_segm7(hun_digit));
+  set_displays(4, convert_to_segm7(ten_digit));
+  set_displays(3, convert_to_segm7(one_digit));
+  set_displays(2, SEG_OFF);
+  set_displays(1, SEG_S);
 }
 
 /*Delays by n seconds on the hardware level as not to interrupt software level
