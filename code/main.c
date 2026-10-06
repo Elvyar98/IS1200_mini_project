@@ -48,12 +48,11 @@ unsigned int maxTime_seconds = 0; //in seconds
 
 /*Timer setup. 
 * Modified by Blomquist, Gustaf. Origins from Lab 3*/
-
 void start_timer(void){
 /*Counts down from maxTime_seconds*/
   *(TMR1_PERLO) = ((maxTime_seconds * 30000000) - 1) & 0xFFFF; 
   *(TMR1_PERHI) = ((maxTime_seconds * 30000000) - 1) >> 16; 
-  *(TMR1_CTRL) = 0x6; //due to 0111 instead of 0110, ITO bit set to 1. 0x6 is TMR Start and Control
+  *(TMR1_CTRL) = 0x4; //Startbit only. 0111 instead of 0110, ITO bit set to 1. 0x6 is TMR Start and Control
 }
 
 /*To pause or stop timer
@@ -145,15 +144,12 @@ int sprint (void){
 
   int runTime_Ms = 0;
   int last_gate = -1;
-  int first_gate = -1;
 
   while (1) {
     if (read_GPIO_zero()){
-      first_gate = 0;
       last_gate = 1;
       break;
     } else if (read_GPIO_one()){
-      first_gate = 1;
       last_gate = 0;
       break;
     }
@@ -447,7 +443,7 @@ void show_speed(int speed){
  *Converts to ms/s, km/h and mi/h if units is 1,2 or 3.
  By Elvis Yarquah*/
 int calculate_speed(){
-  int speed;
+  int speed = 0;
 
   switch(units){
     case 1:
@@ -505,6 +501,7 @@ void show_time(){
 
 void delay(int seconds){
   maxTime_seconds = seconds;
+  *TMR1_STAT = 0;
   start_timer();
   while(1){
     if (timertest()) {
@@ -524,7 +521,7 @@ void check_gpios() {
   start_GPIO_input();
 
   int counter = 0;
-  while((read_GPIO_one() && read_GPIO_zero()) && counter < 9){
+  while((!read_GPIO_one() && !read_GPIO_zero()) && counter < 9){
     if (counter == 0) {
       counter++;
     }
@@ -538,6 +535,7 @@ void check_gpios() {
   }
 
   if (counter < 9) {
+    set_leds(0);
     check_gpios();
   }
 
@@ -557,7 +555,7 @@ int start_run(){
 
    if (global_time == 0) {
 
-     while(!get_btn) show_error();
+     while(!get_btn()) show_error();
      
     return start_run();
   }
