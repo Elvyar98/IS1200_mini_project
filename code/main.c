@@ -10,28 +10,10 @@
 
 /*Values for seven segment display
  * By Claude AI*/
-#define SEG_OFF   255  // 0xFF
-#define SEG_D     161  // 0xA1 (d)
-#define SEG_U     193  // 0xC1
-#define SEG_N     200  // 0xC8
-#define SEG_DASH  191  // 0xBF
-#define SEG_E     134  // 0x86
-#define SEG_R     175  // 0xAF  (r)
-#define SEG_O     163  // 0xA3  (o)
-#define SEG_S     146  // 0x92 
-#define SEG_n     171  // 0xAB (n)
-#define SEG_P     140  // 0x8C 
-#define SEG_H     137  // 0x89
-#define SEG_h_low 139  // 0x8B (h)
-#define SEG_M     212  // 0xD4
-#define SEG_K     148  // 0x94 
-#define SEG_P_DOT 12   // 0x0C
-#define SEG_H_DOT 9   // 0x09
-#define SEG_h_low_DOT 11 // 0x0B
-#define SEG_M_DOT 84  // 0x54
-#define SEG_K_DOT 20  // 0x14
-#define SEG_n_DOT 43 // 0x2B
-#define SEG_M_RIGHT_DOT 120 // 0x78 (to be combined with a N on the display to the left)
+#define SEG_P         140  // 0x8C 
+#define SEG_H         137  // 0x89
+#define SEG_H_LOW     139  // 0x8B
+#define SEG_K         148  // 0x94 
 #define SEG_OFF       255  // 0xFF
 #define SEG_D_LOW     161  // 0xA1 (d)
 #define SEG_U         193  // 0xC1
@@ -45,8 +27,8 @@
 #define SEG_A         136  // 0x88
 #define SEG_E_LOW     132  // 0x84 (e)
 #define SEG_N_LOW     171  // 0xAB (n)
-
-
+#define SEG_M_RIGHT   248  // 0xF8 (7)
+#define SEG_DOT       0x7F 
 
 /*Strut for user_data. Stores time, speed, fastest speed and time,
  * slowest speed and time, average speed and time.
@@ -391,20 +373,19 @@ ms/s, km/h and mp/h if units is 1,2 or 3.
 * By Gustaf Blomquist*/
 void show_units(int label){
   if(label == 1){
-    set_displays(4, SEG_N);
-    set_displays(3, SEG_M_RIGHT_DOT);
-    set_displays(2, SEG_DASH);
+    set_displays(3, SEG_N);
+    set_displays(2, SEG_M_RIGHT & SEG_DOT);
     set_displays(1, SEG_S);
   } else if(label == 2){
-      set_displays(4, SEG_H_DOT);
+      set_displays(4, SEG_H);
       set_displays(3, SEG_N);
-      set_displays(2, SEG_M_RIGHT_DOT);
-      set_displays(1, SEG_h_low_DOT);
+      set_displays(2, SEG_M_RIGHT & SEG_DOT);
+      set_displays(1, SEG_H_LOW);
   } else if(label == 3){
       set_displays(4, SEG_N);
-      set_displays(3, SEG_M_RIGHT_DOT);
-      set_displays(2, SEG_P_DOT);
-      set_displays(1, SEG_h_low_DOT);
+      set_displays(3, SEG_M_RIGHT & SEG_DOT);
+      set_displays(2, SEG_P & SEG_DOT);
+      set_displays(1, SEG_H_LOW);
   }
 }
 
@@ -412,7 +393,7 @@ void show_units(int label){
 * By Gustaf Blomquist */
 void show_minmax(int label){
   set_displays(6, label);
-  set_displays(5, SEG_DASH);
+  set_displays(5, SEG_OFF);
   set_displays(4, SEG_OFF);
 
   if(label == SEG_D_LOW){
@@ -514,7 +495,7 @@ void show_speed(int speed){
     set_displays(6, convert_to_segm7(hun_thou_digit));
     set_displays(5, convert_to_segm7(ten_thou_digit));
     set_displays(4, convert_to_segm7(thou_digit));
-    set_displays(3, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(3, (convert_to_segm7(hun_digit) & SEG_DOT));
   
     set_displays(2, convert_to_segm7(ten_digit));
     set_displays(1, convert_to_segm7(one_digit));
@@ -522,7 +503,7 @@ void show_speed(int speed){
     
     set_displays(6, convert_to_segm7(ten_thou_digit));
     set_displays(5, convert_to_segm7(thou_digit));
-    set_displays(4, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(4, (convert_to_segm7(hun_digit) & SEG_DOT));
     set_displays(3, convert_to_segm7(ten_digit));
      set_displays(2, convert_to_segm7(one_digit));
     set_displays(1, SEG_OFF);
@@ -530,7 +511,7 @@ void show_speed(int speed){
     } else if (speed >=1000){
 
     set_displays(6, convert_to_segm7(thou_digit));
-    set_displays(5, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(5, (convert_to_segm7(hun_digit) & SEG_DOT));
     set_displays(4, convert_to_segm7(ten_digit));
     set_displays(3, convert_to_segm7(one_digit));
     set_displays(2, SEG_OFF);
@@ -538,7 +519,7 @@ void show_speed(int speed){
 
   } else {
 
-    set_displays(6, (convert_to_segm7(hun_digit) & 0x7F));
+    set_displays(6, (convert_to_segm7(hun_digit) & SEG_DOT));
     set_displays(5, convert_to_segm7(ten_digit));
     set_displays(4, convert_to_segm7(one_digit));
     set_displays(3, SEG_OFF);
@@ -594,7 +575,7 @@ void show_time(int t){
   int ten_digit  = (t % 100) / 10;
   int one_digit  = t % 10;
 
-  set_displays(6, convert_to_segm7(thou_digit) & 0x7F);
+  set_displays(6, convert_to_segm7(thou_digit) & SEG_DOT);
   set_displays(5, convert_to_segm7(hun_digit));
   set_displays(4, convert_to_segm7(ten_digit));
   set_displays(3, convert_to_segm7(one_digit));
