@@ -410,24 +410,24 @@ void show_units(int label){
 
 /* Shows specific max or min values depending on label
 * By Gustaf Blomquist */
-void show_minmax(label){
+void show_minmax(int label){
   set_displays(6, label);
   set_displays(5, SEG_DASH);
   set_displays(4, SEG_OFF);
 
   if(label == SEG_D_LOW){
-    set_displays(4, convert_to_segments(1));
+    set_displays(4, convert_to_segm7(1));
     set_displays(3, SEG_DASH);
-    set_displays(2, convert_to_segments(9));
-    set_displays(1, convert_to_segments(9));
+    set_displays(2, convert_to_segm7(9));
+    set_displays(1, convert_to_segm7(9));
   } else if(label == SEG_U){
-      set_displays(3, convert_to_segments(1));
+      set_displays(3, convert_to_segm7(1));
       set_displays(2, SEG_DASH);
-      set_displays(1, convert_to_segments(3));
+      set_displays(1, convert_to_segm7(3));
   } else if(label == SEG_N){
-      set_displays(3, convert_to_segments(1));
+      set_displays(3, convert_to_segm7(1));
       set_displays(2, SEG_DASH);
-      set_displays(1, convert_to_segments(9));
+      set_displays(1, convert_to_segm7(9));
   }
 
 }
@@ -438,7 +438,7 @@ void show_minmax(label){
  * By Elvis Yarquah, Gustaf Blomquist*/
 
 int read_prompt(int label){
-  int user_choice;
+  int user_choice = 0;
 
   show_minmax(label);
  
@@ -778,10 +778,12 @@ void clear_displays(){
 
 void show_user_stats(struct user_data *u){
   while(!get_btn()){
+    set_displays(6, SEG_OFF);
     set_displays(5, SEG_D_LOW);
     set_displays(4, SEG_O_LOW);
     set_displays(3, SEG_N_LOW);
     set_displays(2, SEG_E_LOW);
+    set_displays(1, SEG_OFF);
   }
 
   while(get_btn()){}
@@ -797,16 +799,16 @@ void show_user_stats(struct user_data *u){
     set_displays(2, SEG_OFF);
     set_displays(1, SEG_OFF);
 
-    stat_delay(2);
+    stat_delay(3);
     if (get_btn()) break;
 
     clear_displays();
     show_speed(u->speed[fastest]);
-    stat_delay(2);
+    stat_delay(3);
     clear_displays();
     show_time(u->time[fastest]);
     
-    stat_delay(2);
+    stat_delay(3);
     if (get_btn()) break;
 
     clear_displays();
@@ -818,27 +820,27 @@ void show_user_stats(struct user_data *u){
     set_displays(1, SEG_OFF);
     
 
-    stat_delay(2); 
+    stat_delay(3); 
     if (get_btn()) break;
 
     clear_displays();
     show_speed(u->speed[slowest]);
-    stat_delay(2); 
+    stat_delay(3); 
     clear_displays();
     show_time(u->time[slowest]);
 
-    stat_delay(2); 
+    stat_delay(3); 
     if (get_btn()) break;
 
     clear_displays();
     set_displays(6, SEG_A);
-    stat_delay(2); 
+    stat_delay(3); 
     clear_displays();
     show_speed(u->average_speed);
-    stat_delay(2); 
+    stat_delay(3); 
     clear_displays();
     show_time(u->average_time);
-    stat_delay(2);
+    stat_delay(3);
     if (get_btn()) break;
 
     clear_displays();
@@ -849,11 +851,26 @@ void show_user_stats(struct user_data *u){
   clear_displays();
 }
 
+/* Resets all values in the user_data struct to 0
+* Allowing the program to be looped 
+* By Gemini AI*/
+void reset_user_data(struct user_data *u) {
+  u->fastest = 0;
+  u->slowest = 0;
+  u->average_speed = 0;
+  u->average_time = 0;
+  
+  for (int i = 0; i < 10; i++) {
+    u->speed[i] = 0;
+    u->time[i] = 0;
+  }
+}
 
 void main() {
-  struct user_data user = {0};
+  struct user_data user;
 
   while(1){
+    reset_user_data(&user);
     prompt_user();
     start_runs(&user);        //pointer to created user_data struct
     show_user_stats(&user);
