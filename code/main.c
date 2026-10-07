@@ -774,7 +774,7 @@ void clear_displays(){
 }
 /*Shows stats from struct on the seven segment displays.
  * Loops fastest to average
- * By Elvis Yarquah*/
+ * By Elvis Yarquah, modified by Gustaf Blomquist*/
 
 void show_user_stats(struct user_data *u){
   while(!get_btn()){
@@ -784,10 +784,12 @@ void show_user_stats(struct user_data *u){
     set_displays(2, SEG_E_LOW);
   }
 
+  while(get_btn()){}
+
   int fastest = u->fastest;
   int slowest = u->slowest;
   
-  while(1){
+  while(!get_btn()){
     set_displays(6, SEG_F);
     set_displays(5, SEG_DASH);
     set_displays(4, convert_to_segm7(fastest));
@@ -796,6 +798,8 @@ void show_user_stats(struct user_data *u){
     set_displays(1, SEG_OFF);
 
     stat_delay(2);
+    if (get_btn()) break;
+
     clear_displays();
     show_speed(u->speed[fastest]);
     stat_delay(2);
@@ -803,6 +807,7 @@ void show_user_stats(struct user_data *u){
     show_time(u->time[fastest]);
     
     stat_delay(2);
+    if (get_btn()) break;
 
     clear_displays();
     set_displays(6, SEG_S);
@@ -814,6 +819,8 @@ void show_user_stats(struct user_data *u){
     
 
     stat_delay(2); 
+    if (get_btn()) break;
+
     clear_displays();
     show_speed(u->speed[slowest]);
     stat_delay(2); 
@@ -821,6 +828,8 @@ void show_user_stats(struct user_data *u){
     show_time(u->time[slowest]);
 
     stat_delay(2); 
+    if (get_btn()) break;
+
     clear_displays();
     set_displays(6, SEG_A);
     stat_delay(2); 
@@ -830,7 +839,11 @@ void show_user_stats(struct user_data *u){
     clear_displays();
     show_time(u->average_time);
     stat_delay(2);
+    if (get_btn()) break;
+
     clear_displays();
+
+    
   }
   while(get_btn()){}
   clear_displays();
@@ -838,11 +851,11 @@ void show_user_stats(struct user_data *u){
 
 
 void main() {
-  struct user_data user;
+  struct user_data user = {0};
 
   while(1){
-  prompt_user();
-  start_runs(&user);        //pointer to created user_data struct
-  show_user_stats(&user);
+    prompt_user();
+    start_runs(&user);        //pointer to created user_data struct
+    show_user_stats(&user);
   }
 }
