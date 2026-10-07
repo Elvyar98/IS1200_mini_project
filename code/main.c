@@ -410,24 +410,24 @@ void show_units(int label){
 
 /* Shows specific max or min values depending on label
 * By Gustaf Blomquist */
-void show_minmax(label){
+void show_minmax(int label){
   set_displays(6, label);
   set_displays(5, SEG_DASH);
   set_displays(4, SEG_OFF);
 
   if(label == SEG_D_LOW){
-    set_displays(4, convert_to_segments(1));
+    set_displays(4, convert_to_segm7(1));
     set_displays(3, SEG_DASH);
-    set_displays(2, convert_to_segments(9));
-    set_displays(1, convert_to_segments(9));
+    set_displays(2, convert_to_segm7(9));
+    set_displays(1, convert_to_segm7(9));
   } else if(label == SEG_U){
-      set_displays(3, convert_to_segments(1));
+      set_displays(3, convert_to_segm7(1));
       set_displays(2, SEG_DASH);
-      set_displays(1, convert_to_segments(3));
+      set_displays(1, convert_to_segm7(3));
   } else if(label == SEG_N){
-      set_displays(3, convert_to_segments(1));
+      set_displays(3, convert_to_segm7(1));
       set_displays(2, SEG_DASH);
-      set_displays(1, convert_to_segments(9));
+      set_displays(1, convert_to_segm7(9));
   }
 
 }
