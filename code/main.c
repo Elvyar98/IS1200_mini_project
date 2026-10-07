@@ -415,7 +415,7 @@ void show_minmax(label){
   set_displays(5, SEG_DASH);
   set_displays(4, SEG_OFF);
 
-  if(label == SEG_D){
+  if(label == SEG_D_LOW){
     set_displays(4, convert_to_segments(1));
     set_displays(3, SEG_DASH);
     set_displays(2, convert_to_segments(9));
@@ -484,7 +484,7 @@ void prompt_user(){
   runs = 0;
 
   while(!distance && distance < 100){
-    distance = read_prompt(SEG_D);
+    distance = read_prompt(SEG_D_LOW);
   }
 
   while(!(units && units < 4)){
@@ -832,12 +832,17 @@ void show_user_stats(struct user_data *u){
     stat_delay(2);
     clear_displays();
   }
+  while(get_btn()){}
+  clear_displays();
 }
 
 
 void main() {
   struct user_data user;
+
+  while(1){
   prompt_user();
   start_runs(&user);        //pointer to created user_data struct
   show_user_stats(&user);
+  }
 }
