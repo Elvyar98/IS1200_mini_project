@@ -868,7 +868,7 @@ void main() {
   struct user_data user;
 
   while(1){
-    reset_user_data();
+    reset_user_data(&user);
     prompt_user();
     start_runs(&user);        //pointer to created user_data struct
     show_user_stats(&user);
