@@ -438,7 +438,7 @@ void show_minmax(int label){
  * By Elvis Yarquah, Gustaf Blomquist*/
 
 int read_prompt(int label){
-  int user_choice;
+  int user_choice = 0;
 
   show_minmax(label);
  
