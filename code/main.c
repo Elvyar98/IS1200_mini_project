@@ -849,11 +849,26 @@ void show_user_stats(struct user_data *u){
   clear_displays();
 }
 
+/* Resets all values in the user_data struct to 0
+* Allowing the program to be looped 
+* By Gemini AI*/
+void reset_user_data(struct user_data *u) {
+  u->fastest = 0;
+  u->slowest = 0;
+  u->average_speed = 0;
+  u->average_time = 0;
+  
+  for (int i = 0; i < 10; i++) {
+    u->speed[i] = 0;
+    u->time[i] = 0;
+  }
+}
 
 void main() {
-  struct user_data user = {0};
+  struct user_data user;
 
   while(1){
+    reset_user_data();
     prompt_user();
     start_runs(&user);        //pointer to created user_data struct
     show_user_stats(&user);
