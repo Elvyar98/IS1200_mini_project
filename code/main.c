@@ -32,6 +32,35 @@
 #define SEG_K_DOT 20  // 0x14
 #define SEG_n_DOT 43 // 0x2B
 #define SEG_M_RIGHT_DOT 120 // 0x78 (to be combined with a N on the display to the left)
+#define SEG_OFF       255  // 0xFF
+#define SEG_D_LOW     161  // 0xA1 (d)
+#define SEG_U         193  // 0xC1
+#define SEG_N         200  // 0xC8
+#define SEG_DASH      191  // 0xBF
+#define SEG_E         134  // 0x86
+#define SEG_R_LOW     175  // 0xAF  (r)
+#define SEG_O_LOW     163  // 0xA3  (o)
+#define SEG_S         146  // 0x92 
+#define SEG_F         142  // 0x8E
+#define SEG_A         136  // 0x88
+#define SEG_E_LOW     132  // 0x84 (e)
+#define SEG_N_LOW     171  // 0xAB (n)
+
+
+
+/*Strut for user_data. Stores time, speed, fastest speed and time,
+ * slowest speed and time, average speed and time.
+ * By Elvis Yarquah*/
+
+struct user_data {
+  int speed[10];
+  int time[10];
+  int fastest;
+  int slowest;
+  int average_speed;
+  int average_time;
+};
+
 
 /*GPIO addresses*/
 /*Adress for data for GPIO*/
@@ -449,7 +478,7 @@ int read_prompt(int label){
  * units from 0 - 3.
  * runs from 0 - 9.
  * By Elvis Yarquah*/
-void promt_user(){
+void prompt_user(){
   distance = 0;
   units = 0;
   runs = 0;
@@ -545,19 +574,18 @@ void show_error() {
     while(!get_btn()){
       
      set_displays(6, SEG_E);
-     set_displays(5, SEG_R);
-     set_displays(4, SEG_R);
+     set_displays(5, SEG_R_LOW);
+     set_displays(4, SEG_R_LOW);
      set_displays(3, SEG_O);
-     set_displays(2, SEG_R);
+     set_displays(2, SEG_R_LOW);
      set_displays(1, SEG_OFF);
     }
 }
 
 /*show_time displays global_time (ms) as seconds with three decimals, e.g. 0.234.
  * By Elvis Yarquah*/
-void show_time(){
+void show_time(int t){
 
-  int t = global_time;
   if (t > 9999) t = 9999;
   if (t < 0) t = 0;
 
@@ -574,36 +602,62 @@ void show_time(){
   set_displays(1, SEG_S);
 }
 
-/*Delays by n seconds on the hardware level as not to interrupt software level
+/*Delays by n seconds on the hardware level as not to interrupt software level.
+ * returns 1 if sucessfully timed out. 
  * By Elvis Yarquah*/
 
-void delay(int seconds){
+int delay(int seconds){
   maxTime_seconds = seconds;
   *TMR1_STAT = 0;
   start_timer();
   while(1){
+    if (read_GPIO_one() || read_GPIO_zero()) {
+      stop_timer();
+      return 0;
+    }
+
     if (timertest()) {
       *TMR1_STAT = 0;
-      break;
+      stop_timer();
+      return 1;
     }
   }
-  stop_timer();
 }
 
-/*Check GPIOS constantly polls the GPIOs and counts from 1-4. 
+
+/*Displays the current run number.
+ * Elvis Yarquah*/
+void show_run(int run_number){
+  set_displays(6, convert_to_segm7(run_number));
+  set_displays(5, SEG_OFF);
+  set_displays(4, SEG_O);
+  set_displays(3, SEG_F);
+  set_displays(2, SEG_OFF);
+  set_displays(1, convert_to_segm7(runs));
+}
+
+
+/*Check GPIOS constantly polls the GPIOs and counts from 1-4.
+ * accepts run_number
  * If it gets a zero during the count it restarts.
  * If it never reads a 1 then it "Throws" an error
  * By Elvis Yarquah*/
 
-void check_gpios() {
+void check_gpios(int run_number) {
   start_GPIO_input();
+  show_run(run_number);
 
   int counter = 0;
   while((!read_GPIO_one() && !read_GPIO_zero()) && counter < 9){
     if (counter == 0) {
       counter++;
     }
-    delay(1);
+
+    if (!delay(1)) {
+      set_leds(0);
+      break;
+    }
+
     set_leds(counter);
     counter += counter;
   }
@@ -614,28 +668,30 @@ void check_gpios() {
 
   if (counter < 9) {
     set_leds(0);
-    check_gpios();
+    check_gpios(run_number);
   }
 
   set_leds(0);
 }
 
 
-/*Start run intialize a check to make sure the lasers are connected. 
+
+/*Start run intialize a check to make sure the lasers are connected.
+ * accepts run_number
  * "Throws" an error and restarts run  if time is 0.
  * returns speed.
  * By Elvis Yarquah
  * */
-int start_run(){
+int start_run(int run_number){
   int speed = 0;
-  check_gpios();
+  check_gpios(run_number);
   global_time  = sprint();
 
    if (global_time == 0) {
 
      while(!get_btn()) show_error();
      
-    return start_run();
+    return start_run(run_number);
   }
 
 
@@ -645,7 +701,7 @@ int start_run(){
     show_speed(speed);
   }
 
-  show_time();
+  show_time(global_time);
   
   while(get_btn()){
   
@@ -655,8 +711,133 @@ int start_run(){
   return speed;
 }
 
-void main() {
+/*Starts n amount of runs. Stores values in a struct through pointers.
+ * By Elvis Yarquah*/
 
-  promt_user();
-  start_run();
+void start_runs(struct user_data *u){
+  int fastest_time = 999999999;
+  int slowest_time = 0;
+  int total_time = 0;
+  int total_speed = 0;
+
+
+  for (int i = 1; i <= runs; i++ ) {
+    int speed = start_run(i);
+    u->speed[i] = speed;
+    u->time[i] = global_time;
+
+    total_time += global_time;
+    total_speed += speed;
+
+    if(global_time < fastest_time){
+      fastest_time = global_time;
+      u->fastest = i;
+    }
+    if(global_time > slowest_time){
+      slowest_time = global_time;
+      u->slowest = i;
+    }
+  }
+
+  u->average_speed = total_speed / runs; 
+  u->average_time = total_time / runs; 
+}
+
+
+/*Delay for show_user_stats
+ * By Elvis Yarquah*/
+
+void stat_delay(int seconds){
+  maxTime_seconds = seconds;
+  *TMR1_STAT = 0;
+  start_timer();
+  while(1){
+
+    if (timertest()) {
+      *TMR1_STAT = 0;
+      stop_timer();
+      break;
+    }
+  }
+}
+
+/*Clears the seven segment displays*
+ * By Elvis Yarquah */
+void clear_displays(){
+  
+    set_displays(6, SEG_OFF);
+    set_displays(4, SEG_OFF);
+    set_displays(5, SEG_OFF);
+    set_displays(3, SEG_OFF);
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+}
+/*Shows stats from struct on the seven segment displays.
+ * Loops fastest to average
+ * By Elvis Yarquah*/
+
+void show_user_stats(struct user_data *u){
+  while(!get_btn()){
+    set_displays(5, SEG_D_LOW);
+    set_displays(4, SEG_O_LOW);
+    set_displays(3, SEG_N_LOW);
+    set_displays(2, SEG_E_LOW);
+  }
+
+  int fastest = u->fastest;
+  int slowest = u->slowest;
+  
+  while(1){
+    set_displays(6, SEG_F);
+    set_displays(5, SEG_DASH);
+    set_displays(4, convert_to_segm7(fastest));
+    set_displays(3, SEG_OFF);
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+
+    stat_delay(2);
+    clear_displays();
+    show_speed(u->speed[fastest]);
+    stat_delay(2);
+    clear_displays();
+    show_time(u->time[fastest]);
+    
+    stat_delay(2);
+
+    clear_displays();
+    set_displays(6, SEG_S);
+    set_displays(5, SEG_DASH);
+    set_displays(4, convert_to_segm7(slowest));
+    set_displays(3, SEG_OFF);
+    set_displays(2, SEG_OFF);
+    set_displays(1, SEG_OFF);
+    
+
+    stat_delay(2); 
+    clear_displays();
+    show_speed(u->speed[slowest]);
+    stat_delay(2); 
+    clear_displays();
+    show_time(u->time[slowest]);
+
+    stat_delay(2); 
+    clear_displays();
+    set_displays(6, SEG_A);
+    stat_delay(2); 
+    clear_displays();
+    show_speed(u->average_speed);
+    stat_delay(2); 
+    clear_displays();
+    show_time(u->average_time);
+    stat_delay(2);
+    clear_displays();
+  }
+}
+
+
+void main() {
+  struct user_data user;
+  prompt_user();
+  start_runs(&user);        //pointer to created user_data struct
+  show_user_stats(&user);
 }
