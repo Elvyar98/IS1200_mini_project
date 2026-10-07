@@ -778,10 +778,12 @@ void clear_displays(){
 
 void show_user_stats(struct user_data *u){
   while(!get_btn()){
+    set_displays(6, SEG_OFF);
     set_displays(5, SEG_D_LOW);
     set_displays(4, SEG_O_LOW);
     set_displays(3, SEG_N_LOW);
     set_displays(2, SEG_E_LOW);
+    set_displays(1, SEG_OFF);
   }
 
   while(get_btn()){}
@@ -797,16 +799,16 @@ void show_user_stats(struct user_data *u){
     set_displays(2, SEG_OFF);
     set_displays(1, SEG_OFF);
 
-    stat_delay(2);
+    stat_delay(3);
     if (get_btn()) break;
 
     clear_displays();
     show_speed(u->speed[fastest]);
-    stat_delay(2);
+    stat_delay(3);
     clear_displays();
     show_time(u->time[fastest]);
     
-    stat_delay(2);
+    stat_delay(3);
     if (get_btn()) break;
 
     clear_displays();
@@ -818,27 +820,27 @@ void show_user_stats(struct user_data *u){
     set_displays(1, SEG_OFF);
     
 
-    stat_delay(2); 
+    stat_delay(3); 
     if (get_btn()) break;
 
     clear_displays();
     show_speed(u->speed[slowest]);
-    stat_delay(2); 
+    stat_delay(3); 
     clear_displays();
     show_time(u->time[slowest]);
 
-    stat_delay(2); 
+    stat_delay(3); 
     if (get_btn()) break;
 
     clear_displays();
     set_displays(6, SEG_A);
-    stat_delay(2); 
+    stat_delay(3); 
     clear_displays();
     show_speed(u->average_speed);
-    stat_delay(2); 
+    stat_delay(3); 
     clear_displays();
     show_time(u->average_time);
-    stat_delay(2);
+    stat_delay(3);
     if (get_btn()) break;
 
     clear_displays();
