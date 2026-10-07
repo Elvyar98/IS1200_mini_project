@@ -19,6 +19,19 @@
 #define SEG_R     175  // 0xAF  (r)
 #define SEG_O     163  // 0xA3  (o)
 #define SEG_S     146  // 0x92 
+#define SEG_n     171  // 0xAB (n)
+#define SEG_P     140  // 0x8C 
+#define SEG_H     137  // 0x89
+#define SEG_h_low 139  // 0x8B (h)
+#define SEG_M     212  // 0xD4
+#define SEG_K     148  // 0x94 
+#define SEG_P_DOT 12   // 0x0C
+#define SEG_H_DOT 9   // 0x09
+#define SEG_h_low_DOT 11 // 0x0B
+#define SEG_M_DOT 84  // 0x54
+#define SEG_K_DOT 20  // 0x14
+#define SEG_n_DOT 43 // 0x2B
+#define SEG_M_RIGHT_DOT 120 // 0x78 (to be combined with a N on the display to the left)
 
 /*GPIO addresses*/
 /*Adress for data for GPIO*/
@@ -44,7 +57,7 @@ int runs;
 
 /*Global_values*/
 int global_time = 0;
-unsigned int maxTime_seconds = 0; //in seconds
+unsigned int maxTime_seconds = 10; //in seconds
 
 /*Timer setup. 
 * Modified by Blomquist, Gustaf. Origins from Lab 3*/
@@ -76,7 +89,7 @@ int timertest(void)
 The result is then inverted to avoid getting time left and not time passed.
 Time is calculated based on remaining clock cycles and converted into Milliseconds.
 The unsigned Int is then casted into Int for the return value.
-*By Gemini AI, modified by Blomquist Gustaf*/
+*By Gemini AI, Blomquist Gustaf*/
 int get_timer_snapshot(void) {
     *TMR1_SNAPL = 0x0;
 
@@ -334,7 +347,7 @@ void show_number(int n){
 
 /*Displays intial prompt for distance, units, amount of runs
  * Displays from left to right
- * By Elvis Yarquah*/
+ * By Elvis Yarquah */
 void show_prompt(int label) {
   set_displays(6, label);
   set_displays(5, SEG_DASH);
@@ -342,21 +355,86 @@ void show_prompt(int label) {
   set_displays(3, SEG_OFF);
   set_displays(2, SEG_OFF);
   set_displays(1, SEG_OFF);
-
 }
 
-/*Reads and stores users choices from prompt
- * Gets input by polling switches
- * Displays input when button is pressed.
- * Accepts input when button is released
- * By Elvis Yarquah*/
+/*Displays the units
+ms/s, km/h and mp/h if units is 1,2 or 3.
+* By Gustaf Blomquist*/
+void show_units(int label){
+  if(label == 1){
+    set_displays(4, SEG_N);
+    set_displays(3, SEG_M_RIGHT_DOT);
+    set_displays(2, SEG_DASH);
+    set_displays(1, SEG_S);
+  } else if(label == 2){
+      set_displays(4, SEG_H_DOT);
+      set_displays(3, SEG_N);
+      set_displays(2, SEG_M_RIGHT_DOT);
+      set_displays(1, SEG_h_low_DOT);
+  } else if(label == 3){
+      set_displays(4, SEG_N);
+      set_displays(3, SEG_M_RIGHT_DOT);
+      set_displays(2, SEG_P_DOT);
+      set_displays(1, SEG_h_low_DOT);
+  }
+}
 
-int read_prompt(int label){
-  while(!get_btn()){
-    show_prompt(label);
+/* Shows specific max or min values depending on label
+* By Gustaf Blomquist */
+void show_minmax(label){
+  set_displays(6, label);
+  set_displays(5, SEG_DASH);
+  set_displays(4, SEG_OFF);
+
+  if(label == SEG_D){
+    set_displays(4, convert_to_segments(1));
+    set_displays(3, SEG_DASH);
+    set_displays(2, convert_to_segments(9));
+    set_displays(1, convert_to_segments(9));
+  } else if(label == SEG_U){
+      set_displays(3, convert_to_segments(1));
+      set_displays(2, SEG_DASH);
+      set_displays(1, convert_to_segments(3));
+  } else if(label == SEG_N){
+      set_displays(3, convert_to_segments(1));
+      set_displays(2, SEG_DASH);
+      set_displays(1, convert_to_segments(9));
   }
 
-  int user_choice = get_sw();
+}
+/*Reads and stores users choices from prompt
+ * Gets input by polling switches
+ * Displays input
+ * Accepts input when button is released
+ * By Elvis Yarquah, Gustaf Blomquist*/
+
+int read_prompt(int label){
+  int user_choice;
+
+  show_minmax(label);
+ 
+  while(!get_btn()){} 
+  
+  while(get_btn()){}  
+
+  show_prompt(label);
+  
+  if (label == SEG_U){
+    while(!get_btn()){
+      user_choice = get_sw();
+      show_units(user_choice);
+    }
+    while(get_btn()){
+      user_choice = get_sw();
+      show_units(user_choice);
+    }
+      return user_choice;
+  }
+  while(!get_btn()){
+    user_choice = get_sw();
+    show_number(user_choice);
+  }
+  
   while(get_btn()){
     user_choice = get_sw();
     show_number(user_choice);
@@ -367,16 +445,16 @@ int read_prompt(int label){
 }
 
 /*Prompts user to input distance, unit of speed and amount of runs wanted.
- * distance has to be greater than 0.
+ * distance has to be greater than 0 and less than 100.
  * units from 0 - 3.
- * runs from 0 - 10.
+ * runs from 0 - 9.
  * By Elvis Yarquah*/
 void promt_user(){
   distance = 0;
   units = 0;
   runs = 0;
 
-  while(!distance){
+  while(!distance && distance < 100){
     distance = read_prompt(SEG_D);
   }
 
@@ -384,7 +462,7 @@ void promt_user(){
     units = read_prompt(SEG_U);
   }
 
-  while(!(runs && runs < 11) ){
+  while(!(runs && runs < 10) ){
     runs = read_prompt(SEG_N);
   }
 }
