@@ -496,20 +496,26 @@ void show_time(){
   set_displays(1, SEG_S);
 }
 
-/*Delays by n seconds on the hardware level as not to interrupt software level
+/*Delays by n seconds on the hardware level as not to interrupt software level.
+ * returns 1 if sucessfully timed out. 
  * By Elvis Yarquah*/
 
-void delay(int seconds){
+int delay(int seconds){
   maxTime_seconds = seconds;
   *TMR1_STAT = 0;
   start_timer();
   while(1){
+    if (read_GPIO_one() || read_GPIO_zero()) {
+      stop_timer();
+      return 0;
+    }
+
     if (timertest()) {
       *TMR1_STAT = 0;
-      break;
+      stop_timer();
+      return 1;
     }
   }
-  stop_timer();
 }
 
 /*Check GPIOS constantly polls the GPIOs and counts from 1-4. 
@@ -525,7 +531,12 @@ void check_gpios() {
     if (counter == 0) {
       counter++;
     }
-    delay(1);
+
+    if (!delay(1)) {
+      set_leds(0);
+      break;
+    }
+
     set_leds(counter);
     counter += counter;
   }
