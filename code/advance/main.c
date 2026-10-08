@@ -61,19 +61,30 @@ struct user_data {
 /*Settings for Timer and GPIO detections*/
 #define detect_required ((unsigned int) 10) //in clock cycles
 
-
-
+/*Adress for printing*/
 #define JTAG_UART ((volatile unsigned int*) 0x04000040)
 #define JTAG_CTRL ((volatile unsigned int*) 0x04000044)
 
+/*Results from counters*/
+unsigned counters[9];
+
+
+/*User inputs*/
+int distance; //in cm
+int units; //km/h, mph, m/s
+int runs;
+
+/*Global_values*/
+int global_time = 0;
+unsigned int maxTime_seconds = 10; //in seconds
+
+
+void handle_interrupt(unsigned int cause) {}
 void printc(char s)
 {
     while (((*JTAG_CTRL)&0xffff0000) == 0);
     *JTAG_UART = s;
 }
-
-/*prints chars.
- * Copied from time4riscv*/
 
 void print(char *s)
 {  
@@ -83,8 +94,6 @@ void print(char *s)
   }
 }
 
-/*print numbers.
- * Copied from time4riscv*/
 void print_dec(unsigned int x)
 {
   unsigned divident = 1000000000;
@@ -101,10 +110,22 @@ void print_dec(unsigned int x)
 	printc(48);
 }
 
-/* function: handle_exception
-   Description: This code handles an exception.
-   Copied from time4riscv*/
+void print_hex32 ( unsigned int x)
+{
+  printc('0');
+  printc('x');
+  for (int i = 7; i >= 0; i--) {
+    char hd = (char) ((x >> (i*4)) & 0xf);
+    if (hd < 10)
+      hd += '0';
+    else
+      hd += ('A' - 10);
+    printc(hd);
+  }   
+}
 
+/* function: handle_exception
+   Description: This code handles an exception. */
 void handle_exception ( unsigned arg0, unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned mcause, unsigned syscall_num )
 {
   switch (mcause)
@@ -132,16 +153,33 @@ void handle_exception ( unsigned arg0, unsigned arg1, unsigned arg2, unsigned ar
   while (1);
 }
 
+/*Resets counters by putting them to zero*/*
+static inline void clear_counters(void) {
+  asm volatile("csrw mcycle, x0");
+  asm volatile("csrw minstret, x0");
+  asm volatile("csrw mhpmcounter3, x0");
+  asm volatile("csrw mhpmcounter4, x0");
+  asm volatile("csrw mhpmcounter5, x0");
+  asm volatile("csrw mhpmcounter6, x0");
+  asm volatile("csrw mhpmcounter7, x0");
+  asm volatile("csrw mhpmcounter8, x0");
+  asm volatile("csrw mhpmcounter9, x0");
+}
 
+/*Reads the counters and stores the values in the counter array.
+ */
 
-/*User inputs*/
-int distance; //in cm
-int units; //km/h, mph, m/s
-int runs;
-
-/*Global_values*/
-int global_time = 0;
-unsigned int maxTime_seconds = 10; //in seconds
+static inline void read_counters(void) {
+  asm volatile("csrr %0, mcycle"       : "=r"(cnt[0]));
+  asm volatile("csrr %0, minstret"     : "=r"(cnt[1]));
+  asm volatile("csrr %0, mhpmcounter3" : "=r"(cnt[2]));
+  asm volatile("csrr %0, mhpmcounter4" : "=r"(cnt[3]));
+  asm volatile("csrr %0, mhpmcounter5" : "=r"(cnt[4]));
+  asm volatile("csrr %0, mhpmcounter6" : "=r"(cnt[5]));
+  asm volatile("csrr %0, mhpmcounter7" : "=r"(cnt[6]));
+  asm volatile("csrr %0, mhpmcounter8" : "=r"(cnt[7]));
+  asm volatile("csrr %0, mhpmcounter9" : "=r"(cnt[8]));
+}
 
 /*Timer setup. 
 * Modified by Blomquist, Gustaf. Origins from Lab 3*/
@@ -190,8 +228,6 @@ int get_timer_snapshot(void) {
     return (int)time_in_Ms;
 }
 
-void handle_interrupt(unsigned int cause) {}
-void handle_exception(unsigned int cause) {}
 
 /*GPIO start of input.
 * By Blomquist, Gustaf*/
@@ -926,7 +962,11 @@ void main() {
   while(1){
     reset_user_data(&user);
     prompt_user();
+
+    clear_counters();
     start_runs(&user);        //pointer to created user_data struct
+    read_counters();
+
     show_user_stats(&user);
   }
 }

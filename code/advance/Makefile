@@ -13,7 +13,7 @@ boot.o: boot.S
 testphoto.o: testphoto.c
 	$(CC) $(CFLAGS) -c main.c -o main.o
 
-# dtekv-script.lds automatically pulls in boot.o, so only pass testphoto.o here
+# dtekv-script.lds automatically pulls in boot.o
 main.elf: boot.o main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) main.o -o main.elf
 
