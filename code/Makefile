@@ -1,7 +1,7 @@
 CC      = riscv32-unknown-elf-gcc
 OBJCOPY = riscv32-unknown-elf-objcopy
 
-# Added 'm' for division/modulo instructions, and zicsr for CSR instructions
+#m for division/modulo instructions, and zicsr for CSR instructions
 CFLAGS  = -march=rv32im_zicsr -mabi=ilp32 -ffreestanding -O2 -Wall
 LDFLAGS = -nostdlib -T dtekv-script.lds
 
@@ -10,10 +10,10 @@ all: main.bin
 boot.o: boot.S
 	$(CC) $(CFLAGS) -c boot.S -o boot.o
 
-testphoto.o: testphoto.c
+main.o: main.c
 	$(CC) $(CFLAGS) -c main.c -o main.o
 
-# dtekv-script.lds automatically pulls in boot.o, so only pass testphoto.o here
+#dtekv-script.lds automatically pulls in boot.o
 main.elf: boot.o main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) main.o -o main.elf
 
