@@ -557,7 +557,7 @@ void show_error() {
      set_displays(6, SEG_E);
      set_displays(5, SEG_R_LOW);
      set_displays(4, SEG_R_LOW);
-     set_displays(3, SEG_O);
+     set_displays(3, SEG_O_LOW);
      set_displays(2, SEG_R_LOW);
      set_displays(1, SEG_OFF);
     }
@@ -611,7 +611,7 @@ int delay(int seconds){
 void show_run(int run_number){
   set_displays(6, convert_to_segm7(run_number));
   set_displays(5, SEG_OFF);
-  set_displays(4, SEG_O);
+  set_displays(4, SEG_O_LOW);
   set_displays(3, SEG_F);
   set_displays(2, SEG_OFF);
   set_displays(1, convert_to_segm7(runs));
