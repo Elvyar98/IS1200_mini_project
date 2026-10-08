@@ -33,7 +33,7 @@
 /* Constant values for tests*/
 #define N_CFG 8
 #define MAX_RUNS 256
-#define COLW 10
+#define COLW 12
 
 
 /*Strut for user_data. Stores time, speed, fastest speed and time,
@@ -911,7 +911,7 @@ void measure(int c) {
   read_counters();
 
   for (int k = 0; k < 9; k++)
-    results[c][k] = cnt[k] - baseline[k];   /* was: baseline[k] = cnt[k] */
+    results[c][k] = cnt[k] - baseline[k];   
 }
 /*Delay for show_user_stats
  * By Elvis Yarquah*/
@@ -1039,16 +1039,24 @@ void reset_user_data(struct user_data *u) {
 void print_row(int n, int fixed, unsigned *d, const char *tag) {
   print_pad(n, 5);
   print_pad(fixed, 7);
-  for (int k = 0; k < 9; k++) print_pad(d[k], COLW);
+  print_pad(d[0], COLW);                         /* cycles */
+  print_pad(d[1], COLW);                         /* instr  */
+
+  /* IPC as fixed-point x100: 42 == 0.42. Guard against /0. */
+  unsigned ipc100 = (d[0] != 0) ? (d[1] * 100) / d[0] : 0;
+  print_pad(ipc100, COLW);
+
+  for (int k = 2; k < 9; k++) print_pad(d[k], COLW);
+
   if (tag) { printc(' '); print(tag); }
   printc('\n');
 }
-
 void print_header(void) {
   print_str_pad("runs", 5);
   print_str_pad("fixed", 7);
   print_str_pad("cycles", COLW);
   print_str_pad("instr", COLW);
+  print_str_pad("ipc*100", COLW);
   print_str_pad("mem", COLW);
   print_str_pad("imiss", COLW);
   print_str_pad("dmiss", COLW);
