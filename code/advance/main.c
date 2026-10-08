@@ -66,7 +66,7 @@ struct user_data {
 #define JTAG_CTRL ((volatile unsigned int*) 0x04000044)
 
 /*Results from counters*/
-unsigned counters[9];
+unsigned cnt[9];
 
 
 /*User inputs*/
@@ -153,7 +153,7 @@ void handle_exception ( unsigned arg0, unsigned arg1, unsigned arg2, unsigned ar
   while (1);
 }
 
-/*Resets counters by putting them to zero*/*
+/*Resets counters by putting them to zero*/
 static inline void clear_counters(void) {
   asm volatile("csrw mcycle, x0");
   asm volatile("csrw minstret, x0");
