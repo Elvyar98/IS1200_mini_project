@@ -29,6 +29,9 @@
 #define SEG_N_LOW     171  // 0xAB (n)
 #define SEG_M_RIGHT   248  // 0xF8 (7)
 #define SEG_DOT       0x7F 
+#define SEG_M          84   // 0x54 
+#define SEG_k          88   // 0x58 
+#define SEG_m          170  // 0xAA 
 
 /*Strut for user_data. Stores time, speed, fastest speed and time,
  * slowest speed and time, average speed and time.
@@ -375,18 +378,19 @@ ms/s, km/h and mp/h if units is 1,2 or 3.
 * By Gustaf Blomquist*/
 void show_units(int label){
   if(label == 1){
-    set_displays(3, SEG_N);
-    set_displays(2, SEG_M_RIGHT & SEG_DOT);
+    set_displays(4, SEG_OFF);
+    set_displays(3, SEG_M);
+    set_displays(2, SEG_DASH);
     set_displays(1, SEG_S);
   } else if(label == 2){
-      set_displays(4, SEG_H);
-      set_displays(3, SEG_N);
-      set_displays(2, SEG_M_RIGHT & SEG_DOT);
+      set_displays(4, SEG_K);
+      set_displays(3, SEG_M);
+      set_displays(2, SEG_DASH);
       set_displays(1, SEG_H_LOW);
   } else if(label == 3){
-      set_displays(4, SEG_N);
-      set_displays(3, SEG_M_RIGHT & SEG_DOT);
-      set_displays(2, SEG_P & SEG_DOT);
+      set_displays(4, SEG_M);
+      set_displays(3, SEG_P);
+      set_displays(2, SEG_DASH);
       set_displays(1, SEG_H_LOW);
   }
 }

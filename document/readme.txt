@@ -1,22 +1,39 @@
-============
 README
-============
+Laser Speed Gate
 
-How to run Laser speed gate
+1. File things
+========================================
+1. Download and unpack the zip file with the code.
+2. Create the main folder in your home directory:
+   mkdir ~/main
+3. Move the source files main.c and boot.S, your Makefile, and the linker script dtekv-script.lds to the ~/main folder.
 
-1. donwload the zip to computer, unpack it
-    1.1 Create a folder named main in the home folder
-2. move the Laser Powered Speed Gate and this readme file away from the folder
-3. In the terminal, navigate to the main folder 
-    cd~ main
+2. Compile
+========================================
+1. Navigate to the project folder in the terminal:
+   cd ~/main
+2. Build the program using the command:
+   make
 
-3.1 use command:
-    make
+3. Connect DTEKV
+========================================
+1. Connect the DTEKV board to your computer using the USB cable.
+2. Start JTAG:
+   jtagd --user-start
+3. Check that it detects the board:
+   jtagconfig
 
-4. The code should be compiled now.
-5. connect DTEK-V board by USB
+4. Upload and Run the Program
 
-5.1 jtag user--start- (coorecct this)
-5.2 jtag config
+5. Connect laser board to Powerbank and line it up with DTEK-V board.
+=======================================
+option 1: Lab Run Script
+   ~/dtekv-tools/dtekv-run ~/main/main.bin
 
-7. use command XX to send code to DTEK
+last reserve option: Manual Upload
+   dtekv-upload main.bin 0x00000000
+
+Library Path
+======================================
+earlier fault was solved by updating the librarypath.
+   export LD_LIBRARY_PATH=$HOME/intelFPGA/23.1std/qprogrammer/linux64:$LD_LIBRARY_PATH
