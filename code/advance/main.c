@@ -1090,7 +1090,7 @@ print("-- run-count sweep --\n");
 for (int c = 0; c < 4; c++) print_row(cfg[c].n, cfg[c].fixed, results[c], 0);
 
 printc('\n');
-print("-- fixed-time sweep --\n");
+print("-- time sweep --\n");
 for (int c = 4; c < N_CFG; c++) print_row(cfg[c].n, cfg[c].fixed, results[c], 0);
 
 print("\n=== Sanity check ===\n");
