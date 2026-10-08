@@ -1,24 +1,28 @@
 CC      = riscv32-unknown-elf-gcc
 OBJCOPY = riscv32-unknown-elf-objcopy
 
-#m for division/modulo instructions, and zicsr for CSR instructions
-CFLAGS  = -march=rv32im_zicsr -mabi=ilp32 -ffreestanding -O2 -Wall
+# Dynamiska variabler för tester. Om inget anges används main och -O2.
+OPT     ?= -O2
+SRC     ?= main
+
+# m for division/modulo instructions, and zicsr for CSR instructions
+CFLAGS  = -march=rv32im_zicsr -mabi=ilp32 -ffreestanding $(OPT) -Wall
 LDFLAGS = -nostdlib -T dtekv-script.lds
 
-all: main.bin
+all: $(SRC).bin
 
 boot.o: boot.S
 	$(CC) $(CFLAGS) -c boot.S -o boot.o
 
-main.o: main.c
-	$(CC) $(CFLAGS) -c main.c -o main.o
+$(SRC).o: $(SRC).c
+	$(CC) $(CFLAGS) -c $(SRC).c -o $(SRC).o
 
-#dtekv-script.lds automatically pulls in boot.o
-main.elf: boot.o main.o
-	$(CC) $(CFLAGS) $(LDFLAGS) main.o -o main.elf
+# Länkar in alla beroenden ($^) automatiskt.
+$(SRC).elf: boot.o $(SRC).o
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-main.bin: main.elf
-	$(OBJCOPY) -O binary main.elf main.bin
+$(SRC).bin: $(SRC).elf
+	$(OBJCOPY) -O binary $< $@
 
 clean:
 	rm -f *.elf *.bin *.o
