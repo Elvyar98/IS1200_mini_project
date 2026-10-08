@@ -150,6 +150,8 @@ int read_GPIO_zero (void) {
   return debouncing (0x1); //3 is bit 0 and 1. 1 or 2 for each pin.
 }
 
+/*GPIO reading functions with debouncing.
+* By Blomquist Gustaf*/
 int read_GPIO_one (void) {
   return debouncing (0x2); //3 is bit 0 and 1. 1 or 2 for each pin.
 }
@@ -160,7 +162,7 @@ Checks that both gates are clear.
 Then detects which of the two gates are passed first and starts timer.
 Stops timer either when last gate is passed or maxTime-seconds have passed.
 Converts time into ms, then returns the runTime in Ms
-* By Blomquist, Gustaf, modified by Gemini AI*/
+* By Blomquist, Gustaf, bug-fixed by Gemini AI*/
 int sprint (void){
 
   while (read_GPIO_zero() || read_GPIO_one()){
@@ -549,7 +551,8 @@ int calculate_speed(){
  
 }
 
-
+/*shows Error on the 7-segment display.
+ * By Elvis Yarquah*/
 void show_error() {
 
     while(!get_btn()){
