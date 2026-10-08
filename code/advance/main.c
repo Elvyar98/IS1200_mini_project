@@ -904,12 +904,14 @@ void measure(int c) {
   use_fixed = (cfg[c].fixed != 0);
   fixed_time = cfg[c].fixed;
 
-  slim_start_runs(&hu, runs); //upvärmning för att få in instructionerna i I-cache.
+  slim_start_runs(&hu, runs);   /* warm-up */
 
   clear_counters();
   slim_start_runs(&hu, runs);
   read_counters();
-  for (int k = 0; k < 9; k++) baseline[k] = cnt[k];
+
+  for (int k = 0; k < 9; k++)
+    results[c][k] = cnt[k] - baseline[k];   /* was: baseline[k] = cnt[k] */
 }
 /*Delay for show_user_stats
  * By Elvis Yarquah*/
