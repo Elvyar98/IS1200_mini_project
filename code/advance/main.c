@@ -30,6 +30,11 @@
 #define SEG_M_RIGHT   248  // 0xF8 (7)
 #define SEG_DOT       0x7F 
 
+/* Constant values for tests*/
+#define N_CFG 8
+#define MAX_RUNS 256
+
+
 /*Strut for user_data. Stores time, speed, fastest speed and time,
  * slowest speed and time, average speed and time.
  * By Elvis Yarquah*/
@@ -43,6 +48,27 @@ struct user_data {
   int average_time;
 };
 
+/*Struct for tests*/
+struct user_data_h {
+  int speed[MAX_RUNS + 1];
+  int time[MAX_RUNS + 1];
+  int fastest;
+  int slowest;
+  int average_speed;
+  int average_time;
+};
+
+struct user_data_h hu;
+
+struct config {
+  int n;
+  int fixed;
+};
+
+const struct config cfg[] = {
+  {4, 0}, {16, 0}, {64, 0}, {256, 0},            /* runs tests*/
+  {64, 20}, {64, 200}, {64, 2000}, {64, 9999}    /* time tests*/
+};
 
 /*GPIO addresses*/
 /*Adress for data for GPIO*/
@@ -78,8 +104,19 @@ int runs;
 int global_time = 0;
 unsigned int maxTime_seconds = 10; //in seconds
 
+/* Stand-in values for sprint()*/
+volatile int hw_time[8] = {900, 850, 910, 780, 990, 700, 860, 800};
+volatile int fixed_time;   /* used by the time tests*/
+volatile int use_fixed;    /* 0 = take times from hw_time, 1 = use fixed_time */
+unsigned results[N_CFG][9];   /* one row per configuration, one column per counter */
+unsigned baseline[9];         /* counter-code overhead, measured with nothing in between */
+
 
 void handle_interrupt(unsigned int cause) {}
+
+
+
+/*Taken from time4reiscv*/
 void printc(char s)
 {
     while (((*JTAG_CTRL)&0xffff0000) == 0);
@@ -94,6 +131,7 @@ void print(char *s)
   }
 }
 
+/*Taken from time4reiscv*/
 void print_dec(unsigned int x)
 {
   unsigned divident = 1000000000;
@@ -110,6 +148,7 @@ void print_dec(unsigned int x)
 	printc(48);
 }
 
+/*Taken from time4reiscv*/
 void print_hex32 ( unsigned int x)
 {
   printc('0');
@@ -180,6 +219,17 @@ static inline void read_counters(void) {
   asm volatile("csrr %0, mhpmcounter8" : "=r"(cnt[7]));
   asm volatile("csrr %0, mhpmcounter9" : "=r"(cnt[8]));
 }
+
+
+
+
+
+
+
+
+
+
+
 
 /*Timer setup. 
 * Modified by Blomquist, Gustaf. Origins from Lab 3*/
@@ -801,10 +851,11 @@ int start_run(int run_number){
   return speed;
 }
 
-/*Starts n amount of runs. Stores values in a struct through pointers.
- * By Elvis Yarquah*/
+/*Slim start_runs for test, removing all parts that involve external ouputs.
+ */
 
-void start_runs(struct user_data *u){
+__attribute__((noinline))
+void slim_start_runs(struct user_data_h *u, int n){
   int fastest_time = 999999999;
   int slowest_time = 0;
   int total_time = 0;
@@ -812,7 +863,8 @@ void start_runs(struct user_data *u){
 
 
   for (int i = 1; i <= runs; i++ ) {
-    int speed = start_run(i);
+    global_time = use_fixed ? fixed_time : hw_time[i & 7]; //ersätter sprint med fixed time. 
+    int speed = calculate_speed();
     u->speed[i] = speed;
     u->time[i] = global_time;
 
@@ -833,7 +885,17 @@ void start_runs(struct user_data *u){
   u->average_time = total_time / runs; 
 }
 
+void measure(int c) {
+  runs = cfg[c].n;
+  use_fixed = (cfg[c].fixed != 0);
+  fixed_time = cfg[c].fixed;
 
+  slim_start_runs(&hu, runs); //upvärmning för att få in instructionerna i I-cache.
+
+  clear_counters();
+  slim_start_runs(&hu, runs);
+  read_counters();
+}
 /*Delay for show_user_stats
  * By Elvis Yarquah*/
 
@@ -956,17 +1018,38 @@ void reset_user_data(struct user_data *u) {
   }
 }
 
-void main() {
-  struct user_data user;
-
-  while(1){
-    reset_user_data(&user);
-    prompt_user();
-
-    clear_counters();
-    start_runs(&user);        //pointer to created user_data struct
-    read_counters();
-
-    show_user_stats(&user);
+void print_row(int n, int fixed, unsigned *d) {
+  print_dec(n);
+  printc(',');
+  print_dec(fixed);
+  for (int k = 0; k < 9; k++) {
+    printc(',');
+    print_dec(d[k]);
   }
+  printc('\n');
+}
+
+void main() {
+  distance = 12;
+  units = 2;
+
+  //Gör en baseline check
+  clear_counters();
+  read_counters();
+  for (int k = 0; k < 9; k++) baseline[k] = cnt[k];
+
+  /* mäter */
+  for (int c = 0; c < N_CFG; c++) measure(c);
+
+  /* Skriver ut*/
+  print("runs,fixed,cycles,instr,mem,imiss,dmiss,istall,dstall,hazard,alu\n");
+  print_row(0, 0, baseline);
+  for (int c = 0; c < N_CFG; c++) print_row(cfg[c].n, cfg[c].fixed, results[c]);
+
+  /* Keeps the work alive under -O3 and checks that something sensible was computed */
+  print("check,");
+  print_dec(hu.average_time);
+  printc('\n');
+
+  while (1);
 }

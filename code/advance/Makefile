@@ -19,7 +19,7 @@ $(SRC).o: $(SRC).c
 
 # Länkar in alla beroenden ($^) automatiskt.
 $(SRC).elf: boot.o $(SRC).o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC).o -o $@
 
 $(SRC).bin: $(SRC).elf
 	$(OBJCOPY) -O binary $< $@
