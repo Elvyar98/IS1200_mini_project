@@ -33,6 +33,7 @@
 /* Constant values for tests*/
 #define N_CFG 8
 #define MAX_RUNS 256
+#define COLW 10
 
 
 /*Strut for user_data. Stores time, speed, fastest speed and time,
@@ -123,9 +124,9 @@ void printc(char s)
     *JTAG_UART = s;
 }
 
-void print(char *s)
-{  
-  while (*s != '\0') {    
+void print(const char *s)
+{
+  while (*s != '\0') {
       printc(*s);
       s++;
   }
@@ -163,6 +164,24 @@ void print_hex32 ( unsigned int x)
   }   
 }
 
+/* Right-aligns an unsigned number in a field of `width` characters. */
+void print_pad(unsigned int x, int width) {
+  unsigned int t = x;
+  int digits = 1;
+  while (t >= 10) { t /= 10; digits++; }
+  for (int i = digits; i < width; i++) printc(' ');
+  print_dec(x);
+}
+
+/* Right-aligns a string in a field of `width` characters. */
+void print_str_pad(const char *s, int width) {
+  int len = 0;
+  while (s[len]) len++;
+  for (int i = len; i < width; i++) printc(' ');
+  print(s);
+}
+
+
 /* function: handle_exception
    Description: This code handles an exception. */
 void handle_exception ( unsigned arg0, unsigned arg1, unsigned arg2, unsigned arg3, unsigned arg4, unsigned arg5, unsigned mcause, unsigned syscall_num )
@@ -192,34 +211,29 @@ void handle_exception ( unsigned arg0, unsigned arg1, unsigned arg2, unsigned ar
   while (1);
 }
 
-/*Resets counters by putting them to zero*/
 static inline void clear_counters(void) {
-  asm volatile("csrw mcycle, x0");
-  asm volatile("csrw minstret, x0");
-  asm volatile("csrw mhpmcounter3, x0");
-  asm volatile("csrw mhpmcounter4, x0");
-  asm volatile("csrw mhpmcounter5, x0");
-  asm volatile("csrw mhpmcounter6, x0");
-  asm volatile("csrw mhpmcounter7, x0");
-  asm volatile("csrw mhpmcounter8, x0");
-  asm volatile("csrw mhpmcounter9, x0");
+  asm volatile("csrw mcycle, x0"       ::: "memory");
+  asm volatile("csrw minstret, x0"     ::: "memory");
+  asm volatile("csrw mhpmcounter3, x0" ::: "memory");
+  asm volatile("csrw mhpmcounter4, x0" ::: "memory");
+  asm volatile("csrw mhpmcounter5, x0" ::: "memory");
+  asm volatile("csrw mhpmcounter6, x0" ::: "memory");
+  asm volatile("csrw mhpmcounter7, x0" ::: "memory");
+  asm volatile("csrw mhpmcounter8, x0" ::: "memory");
+  asm volatile("csrw mhpmcounter9, x0" ::: "memory");
 }
-
-/*Reads the counters and stores the values in the counter array.
- */
 
 static inline void read_counters(void) {
-  asm volatile("csrr %0, mcycle"       : "=r"(cnt[0]));
-  asm volatile("csrr %0, minstret"     : "=r"(cnt[1]));
-  asm volatile("csrr %0, mhpmcounter3" : "=r"(cnt[2]));
-  asm volatile("csrr %0, mhpmcounter4" : "=r"(cnt[3]));
-  asm volatile("csrr %0, mhpmcounter5" : "=r"(cnt[4]));
-  asm volatile("csrr %0, mhpmcounter6" : "=r"(cnt[5]));
-  asm volatile("csrr %0, mhpmcounter7" : "=r"(cnt[6]));
-  asm volatile("csrr %0, mhpmcounter8" : "=r"(cnt[7]));
-  asm volatile("csrr %0, mhpmcounter9" : "=r"(cnt[8]));
+  asm volatile("csrr %0, mcycle"       : "=r"(cnt[0]) :: "memory");
+  asm volatile("csrr %0, minstret"     : "=r"(cnt[1]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter3" : "=r"(cnt[2]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter4" : "=r"(cnt[3]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter5" : "=r"(cnt[4]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter6" : "=r"(cnt[5]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter7" : "=r"(cnt[6]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter8" : "=r"(cnt[7]) :: "memory");
+  asm volatile("csrr %0, mhpmcounter9" : "=r"(cnt[8]) :: "memory");
 }
-
 
 
 
@@ -895,6 +909,7 @@ void measure(int c) {
   clear_counters();
   slim_start_runs(&hu, runs);
   read_counters();
+  for (int k = 0; k < 9; k++) baseline[k] = cnt[k];
 }
 /*Delay for show_user_stats
  * By Elvis Yarquah*/
@@ -1018,14 +1033,27 @@ void reset_user_data(struct user_data *u) {
   }
 }
 
-void print_row(int n, int fixed, unsigned *d) {
-  print_dec(n);
-  printc(',');
-  print_dec(fixed);
-  for (int k = 0; k < 9; k++) {
-    printc(',');
-    print_dec(d[k]);
-  }
+
+void print_row(int n, int fixed, unsigned *d, const char *tag) {
+  print_pad(n, 5);
+  print_pad(fixed, 7);
+  for (int k = 0; k < 9; k++) print_pad(d[k], COLW);
+  if (tag) { printc(' '); print(tag); }
+  printc('\n');
+}
+
+void print_header(void) {
+  print_str_pad("runs", 5);
+  print_str_pad("fixed", 7);
+  print_str_pad("cycles", COLW);
+  print_str_pad("instr", COLW);
+  print_str_pad("mem", COLW);
+  print_str_pad("imiss", COLW);
+  print_str_pad("dmiss", COLW);
+  print_str_pad("istall", COLW);
+  print_str_pad("dstall", COLW);
+  print_str_pad("hazard", COLW);
+  print_str_pad("alu", COLW);
   printc('\n');
 }
 
@@ -1042,14 +1070,23 @@ void main() {
   for (int c = 0; c < N_CFG; c++) measure(c);
 
   /* Skriver ut*/
-  print("runs,fixed,cycles,instr,mem,imiss,dmiss,istall,dstall,hazard,alu\n");
-  print_row(0, 0, baseline);
-  for (int c = 0; c < N_CFG; c++) print_row(cfg[c].n, cfg[c].fixed, results[c]);
+print("\n=== Counter measurements ===\n\n");
 
-  /* Keeps the work alive under -O3 and checks that something sensible was computed */
-  print("check,");
-  print_dec(hu.average_time);
-  printc('\n');
+print_header();
+print_row(0, 0, baseline, "  (baseline)");
+printc('\n');
 
-  while (1);
+print("-- run-count sweep --\n");
+for (int c = 0; c < 4; c++) print_row(cfg[c].n, cfg[c].fixed, results[c], 0);
+
+printc('\n');
+print("-- fixed-time sweep --\n");
+for (int c = 4; c < N_CFG; c++) print_row(cfg[c].n, cfg[c].fixed, results[c], 0);
+
+print("\n=== Sanity check ===\n");
+print("average_time (last config, expect 9999): ");
+print_dec(hu.average_time);
+printc('\n');
+
+while (1);
 }
